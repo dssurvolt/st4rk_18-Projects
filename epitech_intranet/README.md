@@ -60,3 +60,80 @@ venv\Scripts\activate     # Windows
 # 3. Installer Django
 pip install --upgrade pip
 pip install django
+pip install -r requirements.txt
+
+▶️ Lancement du projet
+    1. Appliquer les migrations
+    python manage.py migrate
+    
+    2. Créer un superutilisateur
+    python manage.py createsuperuser
+    
+    
+    👉 pour se connecter à /admin.
+    
+    3. Lancer le serveur
+    python manage.py runserver
+    
+    
+    👉 dispo sur : http://127.0.0.1:8000
+    
+    📂 Structure du projet
+    epitech_intranet/
+    │
+    ├── core/                     # App principale
+    │   ├── models.py             # Modèles (Student, Module, Grade, etc.)
+    │   ├── views.py              # Vues (login, dashboard, messaging, etc.)
+    │   ├── urls.py               # Routage des endpoints
+    │   ├── admin.py              # Configuration de l'admin Django
+    │   ├── signals.py            # Création auto des UserProfiles
+    │   └── templates/core/       # Templates HTML
+    │
+    ├── manage.py                 # Script principal Django
+    ├── db.sqlite3                # Base locale (auto-générée)
+    └── README.md                 # Documentation du projet
+    
+    🔐 Authentification & rôles
+    
+    🔑 Connexion : username + mot de passe.
+    
+    🚪 Déconnexion : /logout.
+    
+    📊 Dashboard : uniquement pour utilisateurs connectés.
+    
+    🧑‍🏫 Rôles : étudiant / admin via UserProfile.
+    
+    🧪 Tests en local
+    
+    Crée quelques étudiants via /admin.
+    
+    Connecte-toi sur /login.
+    
+    Envoie un message à un autre utilisateur depuis /send-message/.
+    
+    Consulte ton dashboard sur /dashboard/.
+    
+    🌐 Déploiement
+    
+    Heroku (avec gunicorn + Procfile)
+    
+    Docker (image Python + dépendances Django)
+    
+    Serveur dédié (Nginx + Gunicorn + PostgreSQL recommandé en prod)
+    
+    📌 Points techniques intéressants
+    
+    AbstractUser → modèle Student personnalisé.
+    
+    Signaux Django (post_save) pour auto-créer les UserProfile.
+    
+    Relations ORM : ManyToMany (Modules ↔ Étudiants), ForeignKey (Notes, Messages).
+    
+    Décorateur @login_required pour sécuriser les pages.
+    
+    Flash messages pour le feedback utilisateur.
+    
+    👨‍💻 Auteur
+    
+    Projet développé par Rakib Sobabe
+    📧 rakib.sobabe@epitech.eu
