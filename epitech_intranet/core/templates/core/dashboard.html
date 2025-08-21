@@ -1,0 +1,188 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Dashboard - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-5">
+    <h1 class="display-5 fw-bold mb-3">
+        <i class="fas fa-tachometer-alt text-primary me-3"></i>
+        Dashboard
+    </h1>
+    <p class="lead text-muted">Vue d'ensemble de votre progression académique</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-book-open fa-2x text-primary"></i>
+                </div>
+                <h3 class="stat-number">12</h3>
+                <p class="stat-label">Modules Suivis</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-trophy fa-2x text-success"></i>
+                </div>
+                <h3 class="stat-number">8.5</h3>
+                <p class="stat-label">Moyenne Générale</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-check-circle fa-2x text-warning"></i>
+                </div>
+                <h3 class="stat-number">24</h3>
+                <p class="stat-label">Projets Validés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-envelope fa-2x text-info"></i>
+                </div>
+                <h3 class="stat-number">5</h3>
+                <p class="stat-label">Messages Non Lus</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity & Modules -->
+<div class="row g-4">
+    <!-- Recent Modules -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Modules Récents
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>Progression</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>C Pool</strong></td>
+                                <td><span class="badge bg-success">A</span></td>
+                                <td><span class="badge bg-success">Validé</span></td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 100%">100%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Libmy</strong></td>
+                                <td><span class="badge bg-warning">B</span></td>
+                                <td><span class="badge bg-warning">En cours</span></td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 75%">75%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Matchstick</strong></td>
+                                <td><span class="badge bg-info">C</span></td>
+                                <td><span class="badge bg-info">À compléter</span></td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: 45%">45%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Actions Rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{% url 'profile' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-edit me-2"></i>Modifier Profil
+                    </a>
+                    <a href="{% url 'send_message' %}" class="btn btn-outline-info">
+                        <i class="fas fa-envelope me-2"></i>Nouveau Message
+                    </a>
+                    <a href="#" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar-plus me-2"></i>Planning
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.quick-action-card {
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.quick-action-card:hover {
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}

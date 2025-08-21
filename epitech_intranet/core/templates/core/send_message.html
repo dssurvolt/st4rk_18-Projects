@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Envoyer un Message - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="message-header mb-5">
+    <h1 class="display-5 fw-bold">
+        <i class="fas fa-envelope text-primary me-3"></i>
+        Messagerie
+    </h1>
+    <p class="text-muted">Contactez vos professeurs et collègues</p>
+</div>
+
+<div class="row g-4">
+    <!-- Message List -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-inbox me-2"></i>
+                    Messages
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="message-list">
+                    <div class="message-item active">
+                        <div class="message-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div class="message-item">
+                        <div class="message-avatar">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <a href="{% url 'send_message' %}" class="text-decoration-none">
+                            <div class="quick-action-card p-4 text-center rounded">
+                                <i class="fas fa-paper-plane fa-2x text-primary mb-3"></i>
+                            <h6>Messages</h6>
+                            <small class="text-muted">Envoyer un message</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

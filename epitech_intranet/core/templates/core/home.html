@@ -1,0 +1,123 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Accueil - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">
+            Bienvenue <span class="epitech-gradient">{{ student.first_name }} {{ student.last_name }}</span> !
+        </h1>
+        <p class="lead text-muted mb-5">Votre espace étudiant personnalisé</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profil Card -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="avatar-circle mx-auto mb-3">
+                    <i class="fas fa-user-graduate fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">Profil Étudiant</h5>
+                <div class="text-start">
+                    <p class="mb-2"><i class="fas fa-envelope text-primary me-2"></i>{{ student.epitech_email }}</p>
+                    <p class="mb-2"><i class="fas fa-calendar text-primary me-2"></i>Promo {{ student.promo }}</p>
+                    <p class="mb-0"><i class="fab fa-github text-primary me-2"></i>
+                        <a href="{{ student.github }}" target="_blank" class="text-decoration-none">GitHub Profile</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="fas fa-rocket text-primary me-2"></i>Actions Rapides
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{% url 'dashboard' %}" class="text-decoration-none">
+                            <div class="quick-action-card p-4 text-center rounded">
+                                <i class="fas fa-tachometer-alt fa-2x text-primary mb-3"></i>
+                                <h6>Dashboard</h6>
+                                <small class="text-muted">Voir vos statistiques</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'profile' %}" class="text-decoration-none">
+                            <div class="quick-action-card p-4 text-center rounded">
+                                <i class="fas fa-user-cog fa-2x text-primary mb-3"></i>
+                                <h6>Profil</h6>
+                                <small class="text-muted">Modifier vos infos</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'send_message' %}" class="text-decoration-none">
+                            <div class="quick-action-card p-4 text-center rounded">
+                                <i class="fas fa-paper-plane fa-2x text-primary mb-3"></i>
+                                <h6>Messages</h6>
+                                <small class="text-muted">Contacter un prof</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'logout' %}" class="text-decoration-none">
+                            <div class="quick-action-card p-4 text-center rounded">
+                                <i class="fas fa-sign-out-alt fa-2x text-danger mb-3"></i>
+                                <h6>Déconnexion</h6>
+                                <small class="text-muted">Se déconnecter</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 20px;
+    margin-top: -2rem;
+}
+
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, var(--epitech-primary), var(--epitech-accent));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.quick-action-card {
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.quick-action-card:hover {
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.epitech-gradient {
+    background: linear-gradient(135deg, var(--epitech-primary) 0%, var(--epitech-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+</style>
+{% endblock %}
