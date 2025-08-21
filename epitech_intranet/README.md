@@ -170,6 +170,6 @@ Ce projet peut être déployé sur :
 ## 👨‍💻 Auteur
 
 Projet développé par **Rakib Sobabe**
-📧 [rakib.sobabe@epitech.eu](mailto:rakib.sobabe@epitech.eu)
+📧 [sobaberakib4@gmail.com](mailto:sobaberakib4@gmail.com)
 
 ---
