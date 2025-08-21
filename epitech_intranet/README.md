@@ -1,9 +1,3 @@
-Tu veux devenir responsable de la sécurité d’une grande structure — 💡 tip CTF : documenter ton projet (comme un **README clair et pro**) est une compétence sous-estimée, mais cruciale : en CTF comme en dev, savoir **rendre tes outils compréhensibles et reproductibles** est une arme redoutable.
-
-Voici un **README complet et propre** que tu peux mettre directement dans ton repo GitHub :
-
----
-
 # 🎓 Epitech Intranet – Django Project
 
 ## 📌 Description
@@ -179,5 +173,3 @@ Projet développé par **Rakib Sobabe**
 📧 [rakib.sobabe@epitech.eu](mailto:rakib.sobabe@epitech.eu)
 
 ---
-
-👉 Veux-tu que je génère aussi un **fichier `requirements.txt` minimal** (avec la version exacte de Django + Pillow pour l’upload d’avatars) que tu pourras ajouter direct à ton repo ?
