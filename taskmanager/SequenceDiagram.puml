@@ -1,0 +1,16 @@
+@startuml SequenceDiagram
+actor User
+User -> Frontend: login(username, password)
+Frontend -> Backend: POST /api/auth/login
+Backend -> DB: vérifier user/password
+DB --> Backend: User trouvé
+Backend -> Backend: Générer JWT
+Backend --> Frontend: JWT
+Frontend --> User: Stocke le token (localStorage)
+User -> Frontend: Créer une tâche
+Frontend -> Backend: POST /api/tasks\nAuthorization: Bearer <JWT>
+Backend -> Backend: Vérifie JWT
+Backend -> DB: Sauvegarde tâche
+DB --> Backend: OK
+Backend --> Frontend: Tâche créée
+@enduml

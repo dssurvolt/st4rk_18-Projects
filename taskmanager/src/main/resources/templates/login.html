@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f6f8fa;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-top: 30px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 350px;
+            margin: 30px auto 20px auto;
+            background: #fff;
+            padding: 28px 24px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #fff;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #3182ce;
+            outline: none;
+        }
+        button {
+            background: #3182ce;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #3182ce;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        div[th\:if] {
+            text-align: center;
+            margin-top: 18px;
+            color: #38a169;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<h1>Connexion</h1>
+<div th:if="${param.registered}">Inscription réussie, connectez-vous.</div>
+<form th:action="@{/login}" method="post">
+    <input type="text" name="username" placeholder="username" required/><br/>
+    <input type="password" name="password" placeholder="password" required/><br/>
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <button type="submit">Se connecter</button>
+</form>
+<a th:href="@{/register}">S'inscrire</a>
+</body>
+</html>

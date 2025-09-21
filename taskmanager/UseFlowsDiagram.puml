@@ -1,0 +1,26 @@
+@startuml UseFlowsDiagram
+rectangle "Frontend (React)" {
+  [Login Page]
+  [Task Dashboard]
+}
+
+rectangle "Backend (Spring Boot)" {
+  [AuthController]
+  [TaskController]
+  [UserController]
+  [SecurityConfig]
+}
+
+rectangle "Database (PostgreSQL/MySQL)" {
+  [Users Table]
+  [Roles Table]
+  [Tasks Table]
+}
+
+[Login Page] --> [AuthController]
+[Task Dashboard] --> [TaskController]
+[AuthController] --> [Users Table]
+[TaskController] --> [Tasks Table]
+[UserController] --> [Users Table]
+[UserController] --> [Roles Table]
+@enduml

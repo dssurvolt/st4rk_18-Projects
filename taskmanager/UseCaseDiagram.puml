@@ -1,0 +1,15 @@
+@startuml UseCaseDiagram
+actor "Utilisateur" as U
+actor "Administrateur" as A
+
+U --> (S'inscrire)
+U --> (Se connecter)
+U --> (Créer une tâche)
+U --> (Modifier une tâche)
+U --> (Supprimer une tâche)
+U --> (Lister ses tâches)
+
+A --> (Gérer utilisateurs)
+A --> (Attribuer rôles)
+A --> (Supprimer tâches utilisateur)
+@enduml
