@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-5">
+    <h1 class="h2 fw-bold">Centre de Contrôle du Consensus</h1>
+    <p class="text-muted">Gérez les demandes de validation et les votes des témoins en temps réel.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Colonne Propriétaire -->
+    <div class="col-md-6">
+        <div class="card h-100 border-primary border-opacity-25">
+            <div class="d-flex align-items-center mb-4">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                    <span class="h4 mb-0">📢</span>
+                </div>
+                <h4 class="fw-bold text-white mb-0">1. Initier une Validation</h4>
+            </div>
+            <p class="text-white small mb-4">Le propriétaire demande officiellement à la communauté de valider
+                l'existence de son terrain.</p>
+
+            <form id="reqForm">
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">ID PROPRIÉTÉ (DRAFT)</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="propId" placeholder="ex: 87c7a258" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">WALLET DEMANDEUR</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="reqWallet" placeholder="0x..." required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2">Lancer le Processus</button>
+            </form>
+            <div id="reqResult" class="mt-4 p-3 rounded-3 bg-success bg-opacity-10 text-success d-none"></div>
+        </div>
+    </div>
+
+    <!-- Colonne Témoin -->
+    <div class="col-md-6">
+        <div class="card h-100 border-warning border-opacity-25">
+            <div class="d-flex align-items-center mb-4">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                    <span class="h4 mb-0">⚖️</span>
+                </div>
+                <h4 class="fw-bold text-white mb-0">2. Vote des Témoins</h4>
+            </div>
+            <p class="text-white small mb-4">Les voisins ou chefs locaux certifient la véracité des informations
+                déclarées.</p>
+
+            <form id="voteForm">
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">ID DEMANDE VALIDATION</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white" id="reqId"
+                        placeholder="UUID de la demande" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">NOM COMPLET DU TÉMOIN</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="witnessName" placeholder="Nom et Prénoms" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">DATE DE NAISSANCE</label>
+                    <input type="date" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="witnessBirthDate" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">TÉLÉPHONE DU TÉMOIN</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="witnessPhone" placeholder="+..." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">NUMÉRO PASSEPORT / ID NATIONAL</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="witnessIdNumber" placeholder="Numéro unique du document" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">WALLET (OPTIONNEL)</label>
+                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                        id="witnessWallet" placeholder="0x...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-white small fw-bold">DÉCISION</label>
+                    <select class="form-select bg-dark bg-opacity-25 border-secondary text-white" id="voteVal">
+                        <option value="true">✅ Valide (Aucun litige)</option>
+                        <option value="false">❌ Fraude (Signalement)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 mt-2 text-dark fw-bold">Soumettre le Vote
+                    Certifié</button>
+            </form>
+            <div id="voteResult" class="mt-4 p-3 rounded-3 bg-light bg-opacity-5 d-none"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initier Validation
+    document.getElementById('reqForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const resultDiv = document.getElementById('reqResult');
+        try {
+            const res = await fetch('/api/validation/initiate/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    property_id: document.getElementById('propId').value,
+                    requester_wallet: document.getElementById('reqWallet').value,
+                    gps_at_request: { lat: 6.36, lng: 2.42 } // Simulation Format DD
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                resultDiv.classList.remove('d-none', 'bg-danger', 'text-danger');
+                resultDiv.classList.add('bg-success', 'text-success');
+                resultDiv.innerHTML = `<strong>Succès !</strong> Demande créée avec l'ID : <code class="text-white">${data.id}</code>`;
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            resultDiv.classList.remove('d-none', 'bg-success', 'text-success');
+            resultDiv.classList.add('bg-danger', 'text-danger');
+            resultDiv.innerText = 'Erreur : ' + err.message;
+        }
+    };
+
+    // Voter
+    document.getElementById('voteForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const resultDiv = document.getElementById('voteResult');
+        try {
+            const res = await fetch('/api/validation/vote/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    request_id: document.getElementById('reqId').value,
+                    witness_name: document.getElementById('witnessName').value,
+                    witness_phone: document.getElementById('witnessPhone').value,
+                    witness_id_number: document.getElementById('witnessIdNumber').value,
+                    witness_birth_date: document.getElementById('witnessBirthDate').value,
+                    witness_wallet: document.getElementById('witnessWallet').value,
+                    vote_result: document.getElementById('voteVal').value === 'true',
+                    witness_gps: { lat: 6.36, lng: 2.42 }
+                })
+            });
+            const data = await res.json();
+            resultDiv.classList.remove('d-none');
+            resultDiv.innerHTML = `<pre class="text-info mb-0">${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (err) {
+            resultDiv.classList.remove('d-none');
+            resultDiv.innerHTML = `<span class="text-danger">Erreur : ${err.message}</span>`;
+        }
+    };
+</script>
+{% endblock %}

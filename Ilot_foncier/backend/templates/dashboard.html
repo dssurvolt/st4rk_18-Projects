@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+        <h1 class="h2 fw-bold mb-1">Superviseur - Vue d'ensemble</h1>
+        <p class="text-muted mb-0">Suivi en temps réel de l'intégrité du registre foncier digital.</p>
+    </div>
+    <button class="btn btn-primary btn-sm px-3 py-2 d-flex align-items-center" onclick="location.reload()"
+        title="Synchroniser avec la Blockchain et la base de données">
+        <span class="spinner-grow spinner-grow-sm me-2 text-white" role="status" aria-hidden="true"></span>
+        Données en Direct
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Carte Total Propriétés -->
+    <div class="col-md-4">
+        <div class="card h-100 border-primary border-opacity-10">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                    <span class="h4 mb-0">🏘️</span>
+                </div>
+                <div>
+                    <h6 class="text-white fw-bold mb-0">TOTAL PROPRIÉTÉS</h6>
+                    <small class="text-muted">Parcelles enregistrées</small>
+                </div>
+            </div>
+            <h2 class="display-5 fw-bold text-primary mb-0">{{ total_properties }}</h2>
+            <p class="text-muted small mt-2 mb-0">Volume total des actifs numériques gérés par la plateforme.</p>
+        </div>
+    </div>
+
+    <!-- Carte Utilisateurs -->
+    <div class="col-md-4">
+        <div class="card h-100 border-info border-opacity-10">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                    <span class="h4 mb-0">👥</span>
+                </div>
+                <div>
+                    <h6 class="text-white fw-bold mb-0">COMMUNAUTÉ ACTIVE</h6>
+                    <small class="text-muted">Utilisateurs & Témoins</small>
+                </div>
+            </div>
+            <h2 class="display-5 fw-bold text-info mb-2">{{ total_users }}</h2>
+            <p class="text-muted small mb-0">
+                Dont <span class="text-info fw-bold">{{ witnesses_count }}</span> témoins certifiés prêts pour la
+                validation.
+            </p>
+        </div>
+    </div>
+
+    <!-- Carte Validations -->
+    <div class="col-md-4">
+        <div class="card h-100 border-warning border-opacity-10">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                    <span class="h4 mb-0">⚖️</span>
+                </div>
+                <div>
+                    <h6 class="text-white fw-bold mb-0">VALIDATIONS ACTIVES</h6>
+                    <small class="text-muted">Processus de consensus</small>
+                </div>
+            </div>
+            <h2 class="display-5 fw-bold text-warning mb-0">{{ pending_validations }}</h2>
+            <p class="text-muted small mt-2 mb-0">Demandes en attente de certification par les témoins locaux.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 g-4">
+    <!-- État du Registre -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <h5 class="fw-bold mb-4 text-white">État de Distribution du Registre</h5>
+            <div class="mt-2">
+                {% for stat in properties_by_status %}
+                <div
+                    class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3 bg-dark bg-opacity-25 border border-white border-opacity-10">
+                    <div class="d-flex align-items-center">
+                        <div
+                            class="p-2 rounded-2 me-3 {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% else %}bg-secondary{% endif %} bg-opacity-20">
+                            <div
+                                class="dot {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                            </div>
+                        </div>
+                        <div>
+                            <span class="fw-bold text-white d-block">{{ stat.status }}</span>
+                            <small class="text-muted">
+                                {% if stat.status == 'ON_CHAIN' %}Sécurisé sur la Blockchain (NFT/SBT)
+                                {% elif stat.status == 'VALIDATING' %}En cours de certification communautaire
+                                {% elif stat.status == 'DISPUTED' %}Litige signalé - En attente d'arbitrage
+                                {% else %}Brouillon en attente d'initiation{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span
+                            class="h4 fw-bold text-white mb-0 bg-primary bg-opacity-25 px-3 py-1 rounded-pill border border-primary border-opacity-25">{{
+                            stat.count }}</span>
+                        <span class="text-muted small d-block mt-1">unités</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4 text-muted">
+                    <p>Aucune donnée disponible pour le moment.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Légende & Aide -->
+    <div class="col-md-5">
+        <div class="card h-100 border-secondary border-opacity-25">
+            <h5 class="fw-bold mb-4 text-white">Guide des Indicateurs</h5>
+            <div class="space-y-4">
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-success me-2">ON_CHAIN</span>
+                        <span class="text-white fw-bold small">Statut Final</span>
+                    </div>
+                    <p class="text-muted small">La propriété a été validée par le consensus et "mintée" sur la
+                        blockchain. Elle est désormais infalsifiable et transférable.</p>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-danger me-2">DISPUTED</span>
+                        <span class="text-white fw-bold small">En Litige</span>
+                    </div>
+                    <p class="text-muted small">Un conflit a été signalé (doublon, fraude, ou opposition). Le terrain
+                        est gelé jusqu'à résolution par un arbitre ou chef local.</p>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-warning text-dark me-2">VALIDATING</span>
+                        <span class="text-white fw-bold small">En Vérification</span>
+                    </div>
+                    <p class="text-muted small">Le propriétaire a lancé une demande. Le système attend que 3 témoins
+                        certifiés confirment l'existence du terrain.</p>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-secondary me-2">DRAFT</span>
+                        <span class="text-white fw-bold small">Brouillon</span>
+                    </div>
+                    <p class="text-muted small">Données enregistrées localement (souvent via USSD). Le processus de
+                        validation n'a pas encore été initié par le propriétaire.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .space-y-4>div {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}

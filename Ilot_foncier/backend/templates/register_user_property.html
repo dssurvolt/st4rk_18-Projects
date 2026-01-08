@@ -1,0 +1,168 @@
+{% extends 'base_citizen.html' %}
+{% block sidebar %}{% endblock %}
+{% block main_class %}col-12{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-2">Rejoindre iLôt Foncier</h1>
+            <p class="text-muted lead">Sécurisez votre patrimoine foncier sur la blockchain en quelques minutes.</p>
+            <p class="small">Déjà inscrit ? <a href="{% url 'web_login' %}" class="text-primary fw-bold">Connectez-vous
+                    ici</a></p>
+        </div>
+
+        <div class="citizen-card animate-up mb-5">
+            <form id="registerForm">
+                <!-- Section 1: Identité -->
+                <div class="mb-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <span class="h4 mb-0">👤</span>
+                        </div>
+                        <h4 class="fw-bold mb-0">Votre Identité Digitale</h4>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">NOM ET PRÉNOMS COMPLETS</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 border-light bg-light"
+                                id="ownerName" placeholder="ex: Koffi Mensah" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">ADRESSE WALLET / ID MOBILE</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 border-light bg-light"
+                                id="ownerWallet" placeholder="0x... ou tel:+229..." required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: La Parcelle -->
+                <div class="mb-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <span class="h4 mb-0">📍</span>
+                        </div>
+                        <h4 class="fw-bold mb-0">Localisation de la Parcelle</h4>
+                    </div>
+
+                    <div class="p-4 bg-light rounded-4 mb-4">
+                        <h6 class="fw-bold mb-3">Point Central (Centroïde)</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">LATITUDE</label>
+                                <input type="number" step="any" class="form-control rounded-3 border-0" id="lat"
+                                    placeholder="ex: 6.3654" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">LONGITUDE</label>
+                                <input type="number" step="any" class="form-control rounded-3 border-0" id="lng"
+                                    placeholder="ex: 2.4212" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3">Délimitation Précise (Les 4 Bornes)</h6>
+                    <div class="row g-3" id="boundaryPoints">
+                        {% for i in "1234" %}
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded-4 bg-white shadow-sm">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary">Borne {{ i }}</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <input type="number" step="any"
+                                        class="form-control form-control-sm border-0 bg-light" placeholder="Lat"
+                                        id="b_lat_{{ i }}" required>
+                                    <input type="number" step="any"
+                                        class="form-control form-control-sm border-0 bg-light" placeholder="Lng"
+                                        id="b_lng_{{ i }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Section 3: Preuves -->
+                <div class="mb-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <span class="h4 mb-0">📸</span>
+                        </div>
+                        <h4 class="fw-bold mb-0">Preuves Visuelles & Documents</h4>
+                    </div>
+                    <div class="border-2 border-dashed rounded-4 p-5 text-center bg-light">
+                        <input type="file" class="form-control d-none" id="mediaFiles" multiple>
+                        <label for="mediaFiles" class="cursor-pointer">
+                            <span class="display-4 d-block mb-3">📤</span>
+                            <span class="fw-bold d-block">Cliquez pour uploader vos fichiers</span>
+                            <span class="text-muted small">Photos du terrain, titre foncier, vidéo drone...</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4 bg-primary bg-opacity-5 border border-primary border-opacity-10 mb-4">
+                    <div class="d-flex">
+                        <span class="me-3">🛡️</span>
+                        <p class="small mb-0 text-muted">
+                            <strong>Protection contre les doublons :</strong> Notre système vérifie instantanément si
+                            une autre personne a déjà déclaré ces coordonnées. En cas de conflit, un litige sera ouvert.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-citizen w-100 py-3 fs-5">
+                    CRÉER MON COMPTE ET SÉCURISER MA PARCELLE
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('registerForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('ownerName').value;
+        const wallet = document.getElementById('ownerWallet').value;
+        const lat = parseFloat(document.getElementById('lat').value);
+        const lng = parseFloat(document.getElementById('lng').value);
+
+        const boundaries = [];
+        for (let i = 1; i <= 4; i++) {
+            boundaries.push({
+                lat: parseFloat(document.getElementById(`b_lat_${i}`).value),
+                lng: parseFloat(document.getElementById(`b_lng_${i}`).value)
+            });
+        }
+
+        const files = document.getElementById('mediaFiles').files;
+        const formData = new FormData();
+        formData.append('owner_name', name);
+        formData.append('owner_wallet', wallet);
+        formData.append('gps_centroid', JSON.stringify({ lat, lng }));
+        formData.append('gps_boundaries', JSON.stringify(boundaries));
+
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+
+        try {
+            const res = await fetch('/api/properties/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Félicitations ! Votre compte est créé et votre parcelle est en cours de traitement.');
+                window.location.href = `/dashboard/${wallet}/`;
+            } else {
+                const err = await res.json();
+                alert('Attention : ' + err.error);
+            }
+        } catch (err) {
+            alert('Erreur de connexion au réseau iLôt.');
+        }
+    };
+</script>
+{% endblock %}

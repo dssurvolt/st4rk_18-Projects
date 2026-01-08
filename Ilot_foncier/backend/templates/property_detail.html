@@ -1,0 +1,177 @@
+{% extends 'base_citizen.html' %}
+
+{% block content %}
+<div class="mb-5">
+    <a href="{% url 'user_dashboard' user.wallet_address %}" class="text-decoration-none text-muted small fw-bold">
+        ← Retour à mon patrimoine
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Colonne Gauche: Détails & Statut -->
+    <div class="col-lg-8">
+        <div class="citizen-card mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h6 class="text-primary fw-bold text-uppercase mb-1" style="letter-spacing: 0.1em;">Détails de
+                        l'Actif</h6>
+                    <h1 class="fw-bold">Parcelle #{{ property.id|stringformat:"s"|slice:":8" }}</h1>
+                </div>
+                <span class="status-badge 
+                    {% if property.status == 'ON_CHAIN' %}bg-success text-white
+                    {% elif property.status == 'VALIDATING' %}bg-warning text-dark
+                    {% elif property.status == 'DISPUTED' %}bg-danger text-white
+                    {% else %}bg-light text-muted{% endif %}">
+                    {{ property.status }}
+                </span>
+            </div>
+
+            <!-- Visualisation Géographique Simulée -->
+            <div class="rounded-4 bg-light mb-4 position-relative overflow-hidden"
+                style="height: 300px; border: 2px solid #e2e8f0;">
+                <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+                    style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;">
+                    <!-- Dessin de la parcelle -->
+                    <div
+                        style="width: 150px; height: 120px; border: 3px solid var(--citizen-primary); background: rgba(16, 185, 129, 0.1); transform: rotate(5deg); position: relative;">
+                        <span
+                            class="position-absolute top-0 start-0 translate-middle badge rounded-circle bg-primary p-1"></span>
+                        <span
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-circle bg-primary p-1"></span>
+                        <span
+                            class="position-absolute top-100 start-0 translate-middle badge rounded-circle bg-primary p-1"></span>
+                        <span
+                            class="position-absolute top-100 start-100 translate-middle badge rounded-circle bg-primary p-1"></span>
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center">
+                            <small class="fw-bold text-primary">ZONE SÉCURISÉE</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="position-absolute bottom-0 start-0 m-3 p-2 bg-white rounded-3 shadow-sm border small">
+                    <span class="d-block">📍 <strong>Centroïde:</strong> {{ property.gps_centroid.lat }}, {{
+                        property.gps_centroid.lng }}</span>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-muted small mb-3">COORDONNÉES DES BORNES</h6>
+                    <div class="list-group list-group-flush">
+                        {% for point in property.gps_boundaries %}
+                        <div
+                            class="list-group-item bg-transparent px-0 py-2 d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">Borne {{ forloop.counter }}</span>
+                            <code
+                                class="text-primary">{{ point.lat|floatformat:4 }}, {{ point.lng|floatformat:4 }}</code>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold text-muted small mb-3">CERTIFICATION BLOCKCHAIN</h6>
+                    {% if property.on_chain_id %}
+                    <div class="p-3 bg-primary bg-opacity-5 rounded-4 border border-primary border-opacity-10">
+                        <small class="text-muted d-block mb-1">Token ID (ERC-721)</small>
+                        <span class="fw-bold text-primary">#{{ property.on_chain_id }}</span>
+                        <hr class="my-2">
+                        <small class="text-muted d-block mb-1">Contrat de Registre</small>
+                        <code class="small text-break">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</code>
+                    </div>
+                    {% else %}
+                    <div class="p-3 bg-light rounded-4 text-center">
+                        <span class="d-block mb-2">⏳</span>
+                        <small class="text-muted">En attente de validation finale pour inscription sur la
+                            blockchain.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Galerie Médias -->
+        <div class="citizen-card">
+            <h5 class="fw-bold mb-4">Documents & Preuves Visuelles</h5>
+            <div class="row g-3">
+                {% for m in media %}
+                <div class="col-md-4">
+                    <div class="rounded-4 border p-2 text-center h-100 hover-up">
+                        <div class="bg-light rounded-3 mb-2 d-flex align-items-center justify-content-center"
+                            style="height: 100px;">
+                            {% if m.media_type == 'PHOTO_LAND' %}📸{% elif m.media_type == 'VIDEO_DRONE' %}🎥{% else
+                            %}📄{% endif %}
+                        </div>
+                        <small class="fw-bold d-block text-truncate">{{ m.get_media_type_display }}</small>
+                        <code class="x-small text-muted">{{ m.ipfs_cid|truncatechars:15 }}</code>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-4 text-muted">
+                    <p>Aucun document attaché à cette parcelle.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne Droite: Actions & Historique -->
+    <div class="col-lg-4">
+        <div class="citizen-card mb-4 bg-primary bg-opacity-5 border-primary border-opacity-10">
+            <h5 class="fw-bold mb-3">Actions Disponibles</h5>
+            <div class="d-grid gap-2">
+                {% if property.status == 'DRAFT' %}
+                <button class="btn btn-citizen py-3">Lancer la Validation</button>
+                {% elif property.status == 'ON_CHAIN' %}
+                <button class="btn btn-success text-white fw-bold py-3"
+                    onclick="listForSale('{{ property.id }}')">Mettre en Vente</button>
+                {% endif %}
+                <button class="btn btn-outline-secondary py-2">Télécharger le Certificat PDF</button>
+                <button class="btn btn-outline-danger py-2">Signaler une Erreur</button>
+            </div>
+        </div>
+
+        <div class="citizen-card">
+            <h5 class="fw-bold mb-4">Historique de l'Actif</h5>
+            <div class="timeline-citizen">
+                <div class="timeline-item pb-4 border-start ps-4 position-relative">
+                    <span class="position-absolute start-0 translate-middle-x rounded-circle bg-success"
+                        style="width: 12px; height: 12px; margin-top: 6px;"></span>
+                    <small class="text-muted d-block">Aujourd'hui</small>
+                    <span class="fw-bold">Consultation du dossier</span>
+                </div>
+                <div class="timeline-item pb-4 border-start ps-4 position-relative">
+                    <span class="position-absolute start-0 translate-middle-x rounded-circle bg-primary"
+                        style="width: 12px; height: 12px; margin-top: 6px;"></span>
+                    <small class="text-muted d-block">Il y a 2 jours</small>
+                    <span class="fw-bold">Mise à jour des photos IPFS</span>
+                </div>
+                <div class="timeline-item ps-4 position-relative">
+                    <span class="position-absolute start-0 translate-middle-x rounded-circle bg-secondary"
+                        style="width: 12px; height: 12px; margin-top: 6px;"></span>
+                    <small class="text-muted d-block">Création</small>
+                    <span class="fw-bold">Enregistrement initial</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline-citizen {
+        margin-left: 6px;
+    }
+
+    .hover-up {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .x-small {
+        font-size: 0.65rem;
+    }
+</style>
+{% endblock %}

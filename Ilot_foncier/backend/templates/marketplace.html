@@ -1,0 +1,145 @@
+{% extends 'base_citizen.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-5">
+    <div>
+        <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 0.1em;">Place de Marché Digitale
+        </h6>
+        <h1 class="display-5 fw-bold mb-0">Terrains Disponibles</h1>
+    </div>
+    <div class="d-none d-md-block">
+        <div class="p-3 bg-white rounded-4 border shadow-sm">
+            <small class="text-muted d-block">Total des Offres</small>
+            <span class="h4 fw-bold text-primary mb-0">{{ listings|length }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Vue Carte Simulée -->
+    <div class="col-lg-8">
+        <div class="citizen-card p-0 overflow-hidden" style="height: 450px; border: 2px solid #e2e8f0;">
+            <div class="w-100 h-100 bg-light position-relative"
+                style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px;">
+                {% for listing in listings %}
+                <div class="position-absolute translate-middle hover-scale"
+                    style="top: {{ forloop.counter|add:20 }}%; left: {{ forloop.counter|add:30 }}%; cursor: pointer;"
+                    onclick="window.location.href='{% url 'web_property_detail' listing.property.id %}'"
+                    title="Parcelle #{{ listing.property.id|stringformat:'s'|slice:':8' }}">
+                    <div class="p-2 bg-white rounded-circle shadow-lg border-primary border-2 border d-flex align-items-center justify-content-center"
+                        style="width: 40px; height: 40px;">
+                        🏠
+                    </div>
+                    <div class="badge bg-primary mt-1 shadow-sm">{{ listing.price_fiat }} FCFA</div>
+                </div>
+                {% endfor %}
+                <div class="position-absolute bottom-0 end-0 m-3 p-3 bg-white rounded-4 shadow-sm border">
+                    <h6 class="fw-bold mb-1 small">Légende Carte</h6>
+                    <div class="d-flex align-items-center small text-muted">
+                        <span class="rounded-circle bg-primary me-2" style="width: 10px; height: 10px;"></span> En vente
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Stats Marketplace -->
+    <div class="col-lg-4">
+        <div class="citizen-card h-100 bg-primary border-0 shadow-lg text-white">
+            <h5 class="fw-bold mb-4 text-white">Tendances du Marché</h5>
+            <div class="mb-4">
+                <small class="text-white text-opacity-75 d-block mb-1">Prix Moyen / m²</small>
+                <h3 class="fw-bold text-white">12.500 FCFA</h3>
+            </div>
+            <div class="mb-4">
+                <small class="text-white text-opacity-75 d-block mb-1">Volume de Transactions (24h)</small>
+                <h3 class="fw-bold text-white">4.2M FCFA</h3>
+            </div>
+            <hr class="border-white border-opacity-25">
+            <p class="small text-white text-opacity-75">
+                Toutes les transactions sur la marketplace iLôt sont sécurisées par des contrats séquestres intelligents
+                sur la blockchain Polygon.
+            </p>
+        </div>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-4">Annonces Récentes</h4>
+<div class="row g-4">
+    {% for listing in listings %}
+    <div class="col-md-4">
+        <div class="citizen-card h-100 d-flex flex-column hover-up">
+            <div class="position-relative mb-4">
+                <div class="rounded-4 bg-light overflow-hidden" style="height: 200px;">
+                    <!-- Image placeholder ou générée -->
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-opacity-10">
+                        <span class="display-1">🏡</span>
+                    </div>
+                </div>
+                <span class="badge bg-success position-absolute top-0 end-0 m-3 shadow-sm">EN VENTE</span>
+            </div>
+
+            <h5 class="fw-bold mb-1">Parcelle #{{ listing.property.id|stringformat:"s"|slice:":8" }}</h5>
+            <p class="text-muted small mb-4">
+                <span class="me-2">📍</span> {{ listing.property.gps_centroid.lat }}, {{
+                listing.property.gps_centroid.lng }}
+            </p>
+
+            <div class="mt-auto">
+                <div class="p-3 bg-light rounded-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted d-block">Prix en FCFA</small>
+                            <span class="h5 fw-bold mb-0">{{ listing.price_fiat }} FCFA</span>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">Crypto (cUSD)</small>
+                            <span class="fw-bold text-primary">{{ listing.price_crypto }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-citizen" onclick="buySim('{{ listing.id }}')">ACHETER MAINTENANT</button>
+                    <a href="{% url 'web_property_detail' listing.property.id %}"
+                        class="btn btn-outline-secondary rounded-3 btn-sm">Détails techniques</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="citizen-card border-dashed">
+            <span class="display-1 d-block mb-4">📭</span>
+            <h4 class="fw-bold">Aucune offre active</h4>
+            <p class="text-muted">Revenez plus tard ou mettez votre propre terrain en vente depuis votre dashboard.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .hover-scale {
+        transition: transform 0.3s ease;
+    }
+
+    .hover-scale:hover {
+        transform: translate(-50%, -50%) scale(1.2);
+        z-index: 100;
+    }
+
+    .hover-up {
+        transition: all 0.3s ease;
+    }
+
+    .hover-up:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<script>
+    function buySim(listingId) {
+        alert("Simulation d'achat initiée.\n\nLe système va :\n1. Vérifier vos fonds cUSD\n2. Déployer un contrat séquestre\n3. Transférer le certificat (NFT) après confirmation.");
+    }
+</script>
+{% endblock %}
