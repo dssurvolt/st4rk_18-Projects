@@ -11,7 +11,23 @@ from identity.models import User
 def web_marketplace(request):
     """Vue HTML pour la Marketplace citoyenne."""
     listings = Listing.objects.filter(status=Listing.Status.ACTIVE).select_related('property', 'property__owner_wallet')
-    return render(request, 'marketplace.html', {'listings': listings})
+    
+    # Préparation des données pour la carte JS (Sécurisée via json_script)
+    listings_data = []
+    for l in listings:
+        listings_data.append({
+            'id': str(l.property.id), # On utilise l'ID de la propriété pour le lien technique
+            'lat': float(l.property.gps_centroid.get('lat', 0)),
+            'lng': float(l.property.gps_centroid.get('lng', 0)),
+            'price_fiat': f"{l.price_fiat:,}",
+            'village': l.property.village or "Parcelle iLôt",
+            'is_certified': l.property.is_certified
+        })
+        
+    return render(request, 'marketplace.html', {
+        'listings': listings,
+        'listings_json': listings_data
+    })
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListingListAPI(View):

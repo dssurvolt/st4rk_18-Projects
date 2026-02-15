@@ -13,12 +13,21 @@
         <div class="citizen-card animate-up">
             <form id="loginForm">
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-muted small">VOTRE ADRESSE WALLET OU IDENTIFIANT
-                        MOBILE</label>
-                    <input type="text" class="form-control form-control-lg rounded-4 border-light bg-light"
-                        id="walletAddress" placeholder="0x... ou tel:+229..." required>
-                    <div class="form-text mt-2 small">
-                        L'identifiant utilisé lors de votre inscription ou déclaration USSD.
+                    <label class="form-label fw-bold text-muted small">ADRESSE EMAIL</label>
+                    <input type="email" class="form-control form-control-lg rounded-4 border-light bg-light" id="email"
+                        placeholder="votre@email.com" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-muted small">MOT DE PASSE</label>
+                    <div class="position-relative">
+                        <input type="password" class="form-control form-control-lg rounded-4 border-light bg-light"
+                            id="password" placeholder="••••••••" required>
+                        <button type="button"
+                            class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted"
+                            onclick="togglePassword()" style="text-decoration: none;">
+                            <span id="eyeIcon">👁️</span>
+                        </button>
                     </div>
                 </div>
 
@@ -27,8 +36,10 @@
                         de passe oublié ?</a>
                 </div>
 
+                <div id="errorMessage" class="alert alert-danger d-none mb-3"></div>
+
                 <div class="d-grid gap-3">
-                    <button type="submit" class="btn btn-citizen py-3 fs-5">
+                    <button type="submit" class="btn btn-citizen py-3 fs-5" id="loginBtn">
                         SE CONNECTER
                     </button>
                     <a href="{% url 'web_register' %}" class="btn btn-outline-secondary py-2 rounded-3">
@@ -41,19 +52,61 @@
         <div class="mt-5 text-center p-4 rounded-4 bg-primary bg-opacity-5 border border-primary border-opacity-10">
             <p class="small text-muted mb-0">
                 <strong>Note :</strong> iLôt Foncier utilise la technologie Blockchain pour garantir l'immuabilité de
-                vos titres. Votre identifiant est votre clé d'accès unique.
+                vos titres. Votre compte est sécurisé par un mot de passe robuste.
             </p>
         </div>
     </div>
 </div>
 
 <script>
-    document.getElementById('loginForm').onsubmit = (e) => {
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.textContent = '👁️';
+        }
+    }
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
         e.preventDefault();
-        const wallet = document.getElementById('walletAddress').value;
-        if (wallet) {
-            // Redirection vers le dashboard utilisateur
-            window.location.href = `/dashboard/${wallet}/`;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+
+        errorDiv.classList.add('d-none');
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connexion...';
+
+        try {
+            const response = await fetch('/api/auth/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Stocker l'ID utilisateur et rediriger
+                localStorage.setItem('ilot_user_id', data.user_id);
+                localStorage.setItem('ilot_user_email', email);
+                window.location.href = `/dashboard/${data.user_id}/`;
+            } else {
+                errorDiv.textContent = data.error || 'Email ou mot de passe incorrect';
+                errorDiv.classList.remove('d-none');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'SE CONNECTER';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Erreur de connexion. Veuillez réessayer.';
+            errorDiv.classList.remove('d-none');
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'SE CONNECTER';
         }
     };
 </script>

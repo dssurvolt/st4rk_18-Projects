@@ -1,25 +1,30 @@
-from django.views import View
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from .models import User
+from django.views import View
+from identity.models import User
 
-@method_decorator(csrf_exempt, name='dispatch')
 class UserProfileAPI(View):
-    """
-    API Endpoint: /api/identity/profile/<wallet>/
-    GET: Récupère le profil public (Rôle, Réputation)
-    """
-    def get(self, request, wallet):
+    """API pour récupérer le profil utilisateur"""
+    
+    def get(self, request, wallet=None):
         try:
-            user = User.objects.get(wallet_address=wallet)
-            data = {
+            if wallet:
+                user = User.objects.get(wallet_address=wallet.lower())
+            else:
+                return JsonResponse({'error': 'Wallet address required'}, status=400)
+            
+            return JsonResponse({
+                'id': str(user.id),
+                'email': user.email,
                 'wallet_address': user.wallet_address,
+                'full_name': user.full_name,
                 'role': user.role,
+                'country': user.country,
+                'district': user.district,
+                'village': user.village,
                 'reputation_score': user.reputation_score,
-                'is_active': user.is_active,
-                'date_joined': user.date_joined.isoformat()
-            }
-            return JsonResponse(data)
+                'created_at': user.created_at.isoformat()
+            })
         except User.DoesNotExist:
             return JsonResponse({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

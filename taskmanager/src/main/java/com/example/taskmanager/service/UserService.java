@@ -23,7 +23,12 @@ public class UserService {
             throw new IllegalArgumentException("Email déjà utilisé");
         }
         String encoded = passwordEncoder.encode(rawPassword);
-        AppUser user = new AppUser(username, encoded, "USER", email);
+        AppUser user = AppUser.builder()
+                .username(username)
+                .password(encoded)
+                .roles("USER")
+                .email(email)
+                .build();
         return userRepository.save(user);
     }
 

@@ -5,26 +5,27 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 class UserManager(BaseUserManager):
-    """Manager pour gérer la création d'utilisateurs via Wallet ou Téléphone."""
-    def create_user(self, wallet_address, password=None, **extra_fields):
-        if not wallet_address:
-            raise ValueError(_('The Wallet Address must be set'))
+    """Manager pour gérer la création d'utilisateurs via Email."""
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError(_('The Email must be set'))
+        email = self.normalize_email(email)
         extra_fields.setdefault('is_active', True)
-        user = self.model(wallet_address=wallet_address, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, wallet_address, password, **extra_fields):
+    def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'ADMIN')
-        return self.create_user(wallet_address, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     """
     Utilisateur Hybride (Web3 + Mobile).
-    Remplace le username par wallet_address.
+    Utilise l'email comme identifiant principal.
     """
     class Role(models.TextChoices):
         USER = 'USER', _('Utilisateur Standard')
@@ -35,7 +36,8 @@ class User(AbstractUser):
     username = None  # On désactive le username par défaut
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    wallet_address = models.CharField(max_length=42, unique=True, help_text="Adresse publique Ethereum/Polygon (0x...)")
+    email = models.EmailField(unique=True, help_text="Email de connexion")
+    wallet_address = models.CharField(max_length=42, unique=True, null=True, blank=True, help_text="Adresse publique Ethereum/Polygon (0x...) - Optionnel")
     
     # Privacy & Security
     phone_hash = models.CharField(max_length=64, unique=True, null=True, blank=True, help_text="SHA-256 du numéro de téléphone")
@@ -43,16 +45,20 @@ class User(AbstractUser):
     
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.USER, db_index=True)
     full_name = models.CharField(max_length=255, null=True, blank=True, help_text="Nom et Prénom (pas de chiffres)")
+    birth_date = models.DateField(null=True, blank=True)
+    country = models.CharField(max_length=100, default='Benin', help_text="Pays de résidence")
+    district = models.CharField(max_length=100, null=True, blank=True, help_text="Arrondissement / Commune")
+    village = models.CharField(max_length=100, null=True, blank=True, help_text="Quartier / Village")
     reputation_score = models.IntegerField(default=50, help_text="Score 0-100 basé sur la fiabilité")
     created_at = models.DateTimeField(auto_now_add=True)
     
-    USERNAME_FIELD = 'wallet_address'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = UserManager()
 
     def __str__(self):
-        name = self.full_name if self.full_name else self.wallet_address
+        name = self.full_name if self.full_name else self.email
         return f"{name} ({self.role})"
 
     class Meta:
@@ -62,6 +68,7 @@ class User(AbstractUser):
         indexes = [
             models.Index(fields=['phone_hash']),
             models.Index(fields=['role']),
+            models.Index(fields=['wallet_address']),
         ]
 
 class AuthNonce(models.Model):
@@ -103,3 +110,31 @@ class USSDSession(models.Model):
         indexes = [
             models.Index(fields=['phone_number']),
         ]
+
+class PasswordResetToken(models.Model):
+    """
+    Token de réinitialisation de mot de passe.
+    Valide pendant 1 heure.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_tokens')
+    token = models.CharField(max_length=64, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'password_reset_tokens'
+        verbose_name = _("Token de Réinitialisation")
+        verbose_name_plural = _("Tokens de Réinitialisation")
+    
+    def is_valid(self):
+        """Vérifie si le token est toujours valide"""
+        return not self.used and timezone.now() < self.expires_at
+    
+    def mark_as_used(self):
+        """Marque le token comme utilisé"""
+        self.used = True
+        self.save()
+    
+    def __str__(self):
+        return f"Reset token for {self.user.email}"

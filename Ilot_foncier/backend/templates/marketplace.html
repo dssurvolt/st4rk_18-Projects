@@ -18,29 +18,52 @@
 <div class="row g-4 mb-5">
     <!-- Vue Carte Simulée -->
     <div class="col-lg-8">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
         <div class="citizen-card p-0 overflow-hidden" style="height: 450px; border: 2px solid #e2e8f0;">
-            <div class="w-100 h-100 bg-light position-relative"
-                style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px;">
-                {% for listing in listings %}
-                <div class="position-absolute translate-middle hover-scale"
-                    style="top: {{ forloop.counter|add:20 }}%; left: {{ forloop.counter|add:30 }}%; cursor: pointer;"
-                    onclick="window.location.href='{% url 'web_property_detail' listing.property.id %}'"
-                    title="Parcelle #{{ listing.property.id|stringformat:'s'|slice:':8' }}">
-                    <div class="p-2 bg-white rounded-circle shadow-lg border-primary border-2 border d-flex align-items-center justify-content-center"
-                        style="width: 40px; height: 40px;">
-                        🏠
-                    </div>
-                    <div class="badge bg-primary mt-1 shadow-sm">{{ listing.price_fiat }} FCFA</div>
-                </div>
-                {% endfor %}
-                <div class="position-absolute bottom-0 end-0 m-3 p-3 bg-white rounded-4 shadow-sm border">
-                    <h6 class="fw-bold mb-1 small">Légende Carte</h6>
-                    <div class="d-flex align-items-center small text-muted">
-                        <span class="rounded-circle bg-primary me-2" style="width: 10px; height: 10px;"></span> En vente
-                    </div>
-                </div>
-            </div>
+            <div id="map" style="height: 100%; width: 100%; z-index: 1;"></div>
         </div>
+
+        {{ listings_json|json_script:"listings-data" }}
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Init Map (Centré sur Cotonou par défaut)
+                var map = L.map('map').setView([6.3703, 2.3912], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Récupération des données sécurisées via le script tag
+                const listingsData = JSON.parse(document.getElementById('listings-data').textContent);
+
+                const markers = [];
+                listingsData.forEach(item => {
+                    if (item.lat && item.lng) {
+                        const marker = L.marker([item.lat, item.lng]).addTo(map)
+                            .bindPopup(`
+                                <div class="text-center">
+                                    <h6 class="fw-bold mb-1">${item.village || 'Parcelle'}</h6>
+                                    <span class="badge bg-primary mb-2">${item.price_fiat} FCFA</span><br>
+                                    <a href="/property/${item.id}/" class="btn btn-sm btn-outline-primary py-1 mt-1">Détails techniques</a>
+                                </div>
+                            `);
+                        markers.push(marker);
+                    }
+                });
+
+                // Auto-fit bounds if markers exist
+                if (markers.length > 0) {
+                    const group = new L.featureGroup(markers);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+            });
+        </script>
     </div>
     <!-- Stats Marketplace -->
     <div class="col-lg-4">
@@ -76,12 +99,17 @@
                     </div>
                 </div>
                 <span class="badge bg-success position-absolute top-0 end-0 m-3 shadow-sm">EN VENTE</span>
+                {% if listing.property.is_certified %}
+                <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm">🛡️ DOSSIER CERTIFIÉ</span>
+                {% else %}
+                <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-3 shadow-sm">⚠️ EN ATTENTE
+                    CERTIF.</span>
+                {% endif %}
             </div>
 
-            <h5 class="fw-bold mb-1">Parcelle #{{ listing.property.id|stringformat:"s"|slice:":8" }}</h5>
+            <h5 class="fw-bold mb-1">{{ listing.property.village|default:"Parcelle iLôt" }}</h5>
             <p class="text-muted small mb-4">
-                <span class="me-2">📍</span> {{ listing.property.gps_centroid.lat }}, {{
-                listing.property.gps_centroid.lng }}
+                <span class="me-2">📍</span> {{ listing.property.district }}, {{ listing.property.country }}
             </p>
 
             <div class="mt-auto">
@@ -99,7 +127,10 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button class="btn btn-citizen" onclick="buySim('{{ listing.id }}')">ACHETER MAINTENANT</button>
+                    <button class="btn btn-citizen"
+                        onclick="contactSeller('{{ listing.id }}', '{{ listing.property.is_certified }}')">
+                        CONTACTER LE VENDEUR
+                    </button>
                     <a href="{% url 'web_property_detail' listing.property.id %}"
                         class="btn btn-outline-secondary rounded-3 btn-sm">Détails techniques</a>
                 </div>
@@ -138,8 +169,12 @@
 </style>
 
 <script>
-    function buySim(listingId) {
-        alert("Simulation d'achat initiée.\n\nLe système va :\n1. Vérifier vos fonds cUSD\n2. Déployer un contrat séquestre\n3. Transférer le certificat (NFT) après confirmation.");
+    function contactSeller(listingId, isCertified) {
+        if (isCertified === 'True') {
+            alert("✅ Dossier Certifié détecté !\n\nVotre demande a été envoyée au vendeur. Vous recevrez une notification dès qu'il acceptera de vous partager les documents officiels (PV de géomètre, attestations des témoins).");
+        } else {
+            alert("⚠️ Dossier en cours de certification.\n\nVous pouvez contacter le vendeur, mais notez que les documents officiels ne sont pas encore tous validés par les experts iLôt.");
+        }
     }
 </script>
 {% endblock %}

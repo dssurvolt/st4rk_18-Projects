@@ -54,7 +54,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0">Mes Parcelles Enregistrées</h4>
-    <a href="{% url 'web_register' %}" class="btn btn-citizen btn-sm">+ Déclarer une nouvelle parcelle</a>
+    <a href="{% url 'web_add_property' user.id %}" class="btn btn-citizen btn-sm">+ Déclarer une nouvelle
+        parcelle</a>
 </div>
 
 <div class="row g-4">
@@ -116,7 +117,8 @@
             <div class="mb-4"><span class="display-1">🏜️</span></div>
             <h4 class="fw-bold">Aucune parcelle trouvée</h4>
             <p class="text-muted mb-4">Commencez par déclarer votre premier terrain pour sécuriser votre patrimoine.</p>
-            <a href="{% url 'web_register' %}" class="btn btn-citizen">Déclarer ma première parcelle</a>
+            <a href="{% url 'web_add_property' user.id %}" class="btn btn-citizen">Déclarer ma première
+                parcelle</a>
         </div>
     </div>
     {% endfor %}

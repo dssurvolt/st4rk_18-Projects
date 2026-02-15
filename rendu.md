@@ -111,3 +111,5 @@
 - Offer optional mentor/coach check-ins
 - Focus on skill mastery over certificate completion
 - Design for retention and application, not just consumption
+
+cv, github portfolio, linked in

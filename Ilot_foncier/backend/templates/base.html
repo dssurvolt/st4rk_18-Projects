@@ -6,67 +6,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iLôt Foncier - Registre Digital Premium</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --accent: #ec4899;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc;
-            --text-muted: #e2e8f0;
+            --primary: #10b981;
+            /* Emerald Green - Match Citizen */
+            --secondary: #059669;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --sidebar-bg: #ffffff;
         }
 
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Outfit', sans-serif;
             overflow-x: hidden;
         }
 
         .glass {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #e2e8f0;
             border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .text-muted {
             color: var(--text-muted) !important;
         }
 
-        .form-text {
-            color: var(--text-muted) !important;
-            opacity: 0.8;
-        }
-
-        label {
-            color: var(--text) !important;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        ::placeholder {
-            color: rgba(255, 255, 255, 0.4) !important;
-            font-size: 0.9rem;
-        }
-
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--sidebar-bg);
+            border-right: 1px solid #e2e8f0;
             padding-top: 2rem;
+            position: sticky;
+            top: 0;
         }
 
         .sidebar h3 {
             font-weight: 700;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--primary);
             margin-bottom: 2.5rem;
             padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
         }
 
         .sidebar a {
@@ -74,7 +60,7 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            padding: 0.75rem 1.5rem;
+            padding: 0.8rem 1.5rem;
             margin: 0.25rem 1rem;
             border-radius: 12px;
             transition: all 0.3s ease;
@@ -82,7 +68,7 @@
         }
 
         .sidebar a:hover {
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(16, 185, 129, 0.05);
             color: var(--primary);
             transform: translateX(5px);
         }
@@ -90,30 +76,30 @@
         .sidebar a.active {
             background: var(--primary);
             color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
         .content {
             padding: 2.5rem;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent);
         }
 
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
             padding: 1.5rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--primary);
+            color: white;
             border: none;
             border-radius: 12px;
             padding: 0.6rem 1.5rem;
@@ -122,9 +108,10 @@
         }
 
         .btn-primary:hover {
-            opacity: 0.9;
+            background: var(--secondary);
             transform: scale(1.02);
-            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            color: white;
         }
 
         .badge {
@@ -135,27 +122,23 @@
 
         .table {
             color: var(--text);
-            background-color: transparent !important;
         }
 
         .table-hover tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.03) !important;
-            color: white !important;
+            background-color: rgba(16, 185, 129, 0.02) !important;
         }
 
         .table thead th {
-            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 2px solid #f1f5f9;
             color: var(--text-muted);
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            background-color: transparent !important;
         }
 
         .table td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
-            background-color: transparent !important;
         }
 
         /* Animations */

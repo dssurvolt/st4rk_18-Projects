@@ -3,165 +3,284 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-5">
     <div>
-        <h1 class="h2 fw-bold mb-1">Superviseur - Vue d'ensemble</h1>
-        <p class="text-muted mb-0">Suivi en temps réel de l'intégrité du registre foncier digital.</p>
+        <h6 class="text-primary fw-bold text-uppercase mb-2" style="letter-spacing: 0.1em;">RÉPUBLIQUE DU BÉNIN -
+            CONTRÔLE FONCIER</h6>
+        <h1 class="h2 fw-bold mb-1">Portail de Supervision d'État</h1>
+        <p class="text-muted mb-0">Surveillance de l'intégrité foncière et certification par blockchain.</p>
     </div>
-    <button class="btn btn-primary btn-sm px-3 py-2 d-flex align-items-center" onclick="location.reload()"
-        title="Synchroniser avec la Blockchain et la base de données">
-        <span class="spinner-grow spinner-grow-sm me-2 text-white" role="status" aria-hidden="true"></span>
-        Données en Direct
-    </button>
+    <div class="text-end">
+        <button class="btn btn-outline-primary btn-sm px-3 mb-2" onclick="location.reload()">
+            🔄 Actualiser les données
+        </button>
+        <div class="d-flex gap-2">
+            <span
+                class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 py-2">Blockchain:
+                Opérationnelle</span>
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 py-2">Indexeur: Sync
+                100%</span>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Row 1: High Level -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card h-100 border-0 border-top border-4 border-primary shadow-sm p-4 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <small class="text-muted fw-bold text-uppercase" style="letter-spacing: 0.05em;">Total Parcelles</small>
+                <span class="fs-4">🏘️</span>
+            </div>
+            <h2 class="display-6 fw-bold mb-0 text-dark">{{ total_properties }}</h2>
+            <div class="mt-3 small">
+                <span class="text-muted">Volume global enregistré</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 border-top border-4 border-success shadow-sm p-4 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <small class="text-muted fw-bold text-uppercase" style="letter-spacing: 0.05em;">Dossiers
+                    Certifiés</small>
+                <span class="fs-4">🛡️</span>
+            </div>
+            <h2 class="display-6 fw-bold mb-0 text-success">{{ certified_count }}</h2>
+            <div class="mt-3 small">
+                <span class="text-muted text-success-emphasis">Validés par Experts</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 border-top border-4 border-info shadow-sm p-4 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <small class="text-muted fw-bold text-uppercase" style="letter-spacing: 0.05em;">Géomètres
+                    Agréés</small>
+                <span class="fs-4">📐</span>
+            </div>
+            <h2 class="display-6 fw-bold mb-0 text-info">{{ active_surveyors_count }}</h2>
+            <div class="mt-3 small">
+                <span class="text-muted">Experts certifiés État</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-0 border-top border-4 border-warning shadow-sm p-4 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <small class="text-muted fw-bold text-uppercase" style="letter-spacing: 0.05em;">Litiges Actifs</small>
+                <span class="fs-4">⚖️</span>
+            </div>
+            <h2 class="display-6 fw-bold mb-0 text-warning">0</h2>
+            <div class="mt-3 small">
+                <span class="text-muted">En attente d'arbitrage</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Oversight Map -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden p-0">
+            <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-0">Carte de Vigilance Foncière</h5>
+                    <small class="text-muted">Répartition géographique des actifs</small>
+                </div>
+                <div class="badge bg-light text-dark border fw-normal">Bénin National</div>
+            </div>
+            <div id="overviewMap" style="height: 500px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <!-- Details List -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+            <div class="card-header bg-white border-0 py-3 px-4">
+                <h5 class="fw-bold mb-0">Indicateurs de Santé</h5>
+            </div>
+            <div class="card-body px-4">
+                {% for stat in properties_by_status %}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="d-flex align-items-center">
+                            <span
+                                class="dot me-2 {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% elif stat.status == 'PENDING_SURVEYOR' %}bg-info{% else %}bg-secondary{% endif %}"></span>
+                            <span class="fw-bold small text-dark">{{ stat.label }}</span>
+                        </div>
+                        <span class="fw-bold small">{{ stat.count }}</span>
+                    </div>
+                    {% widthratio stat.count total_properties 100 as pct %}
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% elif stat.status == 'PENDING_SURVEYOR' %}bg-info{% else %}bg-secondary{% endif %}"
+                            role="progressbar" style="width: {{ pct }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <hr class="my-4 opacity-10">
+
+                <h6 class="fw-bold mb-3 small text-muted text-uppercase" style="letter-spacing: 0.1em;">Alertes du
+                    Registre</h6>
+                <div class="p-3 bg-light rounded-4 border-start border-4 border-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="fw-bold text-info">Attente Expert</small>
+                        <span class="badge bg-white text-info border-info border-opacity-25">{{ pending_surveyor_count
+                            }}</span>
+                    </div>
+                    <p class="small text-muted mb-0 mt-2">Dossiers en attente de signature numérique par géomètre.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4">
-    <!-- Carte Total Propriétés -->
-    <div class="col-md-4">
-        <div class="card h-100 border-primary border-opacity-10">
-            <div class="d-flex align-items-center mb-3">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                    <span class="h4 mb-0">🏘️</span>
-                </div>
-                <div>
-                    <h6 class="text-white fw-bold mb-0">TOTAL PROPRIÉTÉS</h6>
-                    <small class="text-muted">Parcelles enregistrées</small>
-                </div>
+    <!-- Recent Activity -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">Dernières Déclarations Enregistrées</h5>
+                <a href="{% url 'web_properties' %}"
+                    class="btn btn-link text-primary text-decoration-none fw-bold small">Voir tout le registre →</a>
             </div>
-            <h2 class="display-5 fw-bold text-primary mb-0">{{ total_properties }}</h2>
-            <p class="text-muted small mt-2 mb-0">Volume total des actifs numériques gérés par la plateforme.</p>
-        </div>
-    </div>
-
-    <!-- Carte Utilisateurs -->
-    <div class="col-md-4">
-        <div class="card h-100 border-info border-opacity-10">
-            <div class="d-flex align-items-center mb-3">
-                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                    <span class="h4 mb-0">👥</span>
-                </div>
-                <div>
-                    <h6 class="text-white fw-bold mb-0">COMMUNAUTÉ ACTIVE</h6>
-                    <small class="text-muted">Utilisateurs & Témoins</small>
-                </div>
-            </div>
-            <h2 class="display-5 fw-bold text-info mb-2">{{ total_users }}</h2>
-            <p class="text-muted small mb-0">
-                Dont <span class="text-info fw-bold">{{ witnesses_count }}</span> témoins certifiés prêts pour la
-                validation.
-            </p>
-        </div>
-    </div>
-
-    <!-- Carte Validations -->
-    <div class="col-md-4">
-        <div class="card h-100 border-warning border-opacity-10">
-            <div class="d-flex align-items-center mb-3">
-                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                    <span class="h4 mb-0">⚖️</span>
-                </div>
-                <div>
-                    <h6 class="text-white fw-bold mb-0">VALIDATIONS ACTIVES</h6>
-                    <small class="text-muted">Processus de consensus</small>
-                </div>
-            </div>
-            <h2 class="display-5 fw-bold text-warning mb-0">{{ pending_validations }}</h2>
-            <p class="text-muted small mt-2 mb-0">Demandes en attente de certification par les témoins locaux.</p>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-5 g-4">
-    <!-- État du Registre -->
-    <div class="col-md-7">
-        <div class="card h-100">
-            <h5 class="fw-bold mb-4 text-white">État de Distribution du Registre</h5>
-            <div class="mt-2">
-                {% for stat in properties_by_status %}
-                <div
-                    class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3 bg-dark bg-opacity-25 border border-white border-opacity-10">
-                    <div class="d-flex align-items-center">
-                        <div
-                            class="p-2 rounded-2 me-3 {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% else %}bg-secondary{% endif %} bg-opacity-20">
-                            <div
-                                class="dot {% if stat.status == 'ON_CHAIN' %}bg-success{% elif stat.status == 'VALIDATING' %}bg-warning{% elif stat.status == 'DISPUTED' %}bg-danger{% else %}bg-secondary{% endif %}">
-                            </div>
-                        </div>
-                        <div>
-                            <span class="fw-bold text-white d-block">{{ stat.status }}</span>
-                            <small class="text-muted">
-                                {% if stat.status == 'ON_CHAIN' %}Sécurisé sur la Blockchain (NFT/SBT)
-                                {% elif stat.status == 'VALIDATING' %}En cours de certification communautaire
-                                {% elif stat.status == 'DISPUTED' %}Litige signalé - En attente d'arbitrage
-                                {% else %}Brouillon en attente d'initiation{% endif %}
-                            </small>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <span
-                            class="h4 fw-bold text-white mb-0 bg-primary bg-opacity-25 px-3 py-1 rounded-pill border border-primary border-opacity-25">{{
-                            stat.count }}</span>
-                        <span class="text-muted small d-block mt-1">unités</span>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="text-center py-4 text-muted">
-                    <p>Aucune donnée disponible pour le moment.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Légende & Aide -->
-    <div class="col-md-5">
-        <div class="card h-100 border-secondary border-opacity-25">
-            <h5 class="fw-bold mb-4 text-white">Guide des Indicateurs</h5>
-            <div class="space-y-4">
-                <div class="mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-success me-2">ON_CHAIN</span>
-                        <span class="text-white fw-bold small">Statut Final</span>
-                    </div>
-                    <p class="text-muted small">La propriété a été validée par le consensus et "mintée" sur la
-                        blockchain. Elle est désormais infalsifiable et transférable.</p>
-                </div>
-                <div class="mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-danger me-2">DISPUTED</span>
-                        <span class="text-white fw-bold small">En Litige</span>
-                    </div>
-                    <p class="text-muted small">Un conflit a été signalé (doublon, fraude, ou opposition). Le terrain
-                        est gelé jusqu'à résolution par un arbitre ou chef local.</p>
-                </div>
-                <div class="mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-warning text-dark me-2">VALIDATING</span>
-                        <span class="text-white fw-bold small">En Vérification</span>
-                    </div>
-                    <p class="text-muted small">Le propriétaire a lancé une demande. Le système attend que 3 témoins
-                        certifiés confirment l'existence du terrain.</p>
-                </div>
-                <div>
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-secondary me-2">DRAFT</span>
-                        <span class="text-white fw-bold small">Brouillon</span>
-                    </div>
-                    <p class="text-muted small">Données enregistrées localement (souvent via USSD). Le processus de
-                        validation n'a pas encore été initié par le propriétaire.</p>
-                </div>
+            <div class="table-responsive px-4 pb-4">
+                <table class="table align-middle">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th>IDENTIFIANT</th>
+                            <th>LOCALISATION</th>
+                            <th>SUPERFICIE</th>
+                            <th>GÉOMÈTRE</th>
+                            <th>CERTIFICATION</th>
+                            <th>STATUT</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in recent_properties %}
+                        <tr>
+                            <td><code class="fw-bold">#{{ p.id|stringformat:"s"|slice:":8" }}</code></td>
+                            <td>
+                                <span class="fw-bold d-block">{{ p.village|default:"N/A" }}</span>
+                                <small class="text-muted">{{ p.district }}, {{ p.country }}</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark fw-bold">{{ p.area_sqm|floatformat:0 }} m²</span>
+                            </td>
+                            <td>
+                                {% if p.surveyor %}
+                                <small class="fw-bold text-primary">{{ p.surveyor.name }}</small>
+                                {% else %}
+                                <small class="text-muted">{{ p.surveyor_name|default:"Auto-déclaré" }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.is_certified %}
+                                <span
+                                    class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">🛡️
+                                    Certifié</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {% if p.status == 'ON_CHAIN' %}bg-success{% elif p.status == 'VALIDATING' %}bg-warning{% elif p.status == 'DISPUTED' %}bg-danger{% elif p.status == 'PENDING_SURVEYOR' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ p.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'web_property_detail' p.id %}"
+                                    class="btn btn-sm btn-outline-primary rounded-pill px-3">Examiner</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+{{ properties_json|json_script:"map-data" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const data = JSON.parse(document.getElementById('map-data').textContent);
+
+        // Init Map (Center on Benin)
+        var map = L.map('overviewMap').setView([9.3077, 2.3158], 7);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        }).addTo(map);
+
+        const markers = [];
+        data.forEach(item => {
+            if (item.lat && item.lng) {
+                let color = '#6b7280'; // gray
+                if (item.status === 'ON_CHAIN') color = '#059669'; // green
+                if (item.status === 'VALIDATING') color = '#d97706'; // orange
+                if (item.status === 'PENDING_SURVEYOR') color = '#0284c7'; // blue
+                if (item.status === 'DISPUTED') color = '#dc2626'; // red
+
+                const marker = L.circleMarker([item.lat, item.lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: "#fff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="p-2">
+                        <h6 class="fw-bold mb-1">#${item.id.slice(0, 8)}</h6>
+                        <small class="text-muted d-block mb-2">${item.village}</small>
+                        <span class="badge" style="background-color: ${color}">${item.status}</span>
+                        ${item.is_certified ? '<br><span class="badge bg-primary mt-1">🛡️ Certifié</span>' : ''}
+                        <hr class="my-2">
+                        <a href="/property/${item.id}/" class="btn btn-sm btn-primary text-white w-100 py-1">Voir Détails</a>
+                    </div>
+                `);
+                markers.push(marker);
+            }
+        });
+
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.2));
+        }
+    });
+</script>
 
 <style>
-    .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
+    body {
+        background-color: #f8fafc;
     }
 
-    .space-y-4>div {
-        margin-bottom: 1.5rem;
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-top: 0;
+    }
+
+    .display-6 {
+        font-size: 2.5rem;
     }
 </style>
+
 {% endblock %}

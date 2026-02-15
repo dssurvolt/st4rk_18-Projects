@@ -12,8 +12,8 @@ data Ast
     | Call { funcName :: String
            , args :: [Ast] }
     | AstInteger Int
-    | AstSymbol String
-    | AstBool Bool
+    | AstBool Bo
+    | AstSymbol Stringol
     | AstList [Ast]
     | AstNil
     deriving (Show, Eq)

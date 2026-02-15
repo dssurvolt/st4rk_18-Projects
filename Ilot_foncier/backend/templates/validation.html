@@ -9,87 +9,85 @@
 <div class="row g-4">
     <!-- Colonne Propriétaire -->
     <div class="col-md-6">
-        <div class="card h-100 border-primary border-opacity-25">
+        <div class="card h-100 border-0 shadow-sm border-top border-4 border-primary bg-white">
             <div class="d-flex align-items-center mb-4">
                 <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
                     <span class="h4 mb-0">📢</span>
                 </div>
-                <h4 class="fw-bold text-white mb-0">1. Initier une Validation</h4>
+                <h4 class="fw-bold mb-0">1. Initier une Validation</h4>
             </div>
-            <p class="text-white small mb-4">Le propriétaire demande officiellement à la communauté de valider
+            <p class="text-muted small mb-4">Le propriétaire demande officiellement à la communauté de valider
                 l'existence de son terrain.</p>
 
             <form id="reqForm">
                 <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">ID PROPRIÉTÉ (DRAFT)</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="propId" placeholder="ex: 87c7a258" required>
+                    <label class="form-label small fw-bold text-muted">ID PROPRIÉTÉ (DRAFT)</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" id="propId"
+                        placeholder="ex: 87c7a258" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">WALLET DEMANDEUR</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="reqWallet" placeholder="0x..." required>
+                    <label class="form-label small fw-bold text-muted">WALLET DEMANDEUR</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" id="reqWallet" placeholder="0x..."
+                        required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 mt-2">Lancer le Processus</button>
+                <button type="submit" class="btn btn-primary w-100 mt-2 py-2">Lancer le Processus</button>
             </form>
-            <div id="reqResult" class="mt-4 p-3 rounded-3 bg-success bg-opacity-10 text-success d-none"></div>
+            <div id="reqResult" class="mt-4 p-3 rounded-4 bg-success bg-opacity-10 text-success d-none small"></div>
         </div>
     </div>
 
     <!-- Colonne Témoin -->
     <div class="col-md-6">
-        <div class="card h-100 border-warning border-opacity-25">
+        <div class="card h-100 border-0 shadow-sm border-top border-4 border-warning bg-white">
             <div class="d-flex align-items-center mb-4">
                 <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
                     <span class="h4 mb-0">⚖️</span>
                 </div>
-                <h4 class="fw-bold text-white mb-0">2. Vote des Témoins</h4>
+                <h4 class="fw-bold mb-0">2. Vote des Témoins</h4>
             </div>
-            <p class="text-white small mb-4">Les voisins ou chefs locaux certifient la véracité des informations
+            <p class="text-muted small mb-4">Les voisins ou chefs locaux certifient la véracité des informations
                 déclarées.</p>
 
             <form id="voteForm">
                 <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">ID DEMANDE VALIDATION</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white" id="reqId"
+                    <label class="form-label small fw-bold text-muted">ID DEMANDE VALIDATION</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" id="reqId"
                         placeholder="UUID de la demande" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">NOM COMPLET DU TÉMOIN</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="witnessName" placeholder="Nom et Prénoms" required>
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">NOM COMPLET</label>
+                        <input type="text" class="form-control bg-light border-0 py-2" id="witnessName"
+                            placeholder="Nom et Prénoms" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">DATE DE NAISSANCE</label>
+                        <input type="date" class="form-control bg-light border-0 py-2" id="witnessBirthDate" required>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">TÉLÉPHONE</label>
+                        <input type="text" class="form-control bg-light border-0 py-2" id="witnessPhone"
+                            placeholder="+..." required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-bold text-muted">ID NATIONAL</label>
+                        <input type="text" class="form-control bg-light border-0 py-2" id="witnessIdNumber"
+                            placeholder="Numéro unique" required>
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">DATE DE NAISSANCE</label>
-                    <input type="date" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="witnessBirthDate" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">TÉLÉPHONE DU TÉMOIN</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="witnessPhone" placeholder="+..." required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">NUMÉRO PASSEPORT / ID NATIONAL</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="witnessIdNumber" placeholder="Numéro unique du document" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">WALLET (OPTIONNEL)</label>
-                    <input type="text" class="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                        id="witnessWallet" placeholder="0x...">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-white small fw-bold">DÉCISION</label>
-                    <select class="form-select bg-dark bg-opacity-25 border-secondary text-white" id="voteVal">
+                    <label class="form-label small fw-bold text-muted">DÉCISION</label>
+                    <select class="form-select bg-light border-0 py-2" id="voteVal">
                         <option value="true">✅ Valide (Aucun litige)</option>
                         <option value="false">❌ Fraude (Signalement)</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-warning w-100 mt-2 text-dark fw-bold">Soumettre le Vote
+                <button type="submit" class="btn btn-warning w-100 mt-2 py-2 fw-bold">Soumettre le Vote
                     Certifié</button>
             </form>
-            <div id="voteResult" class="mt-4 p-3 rounded-3 bg-light bg-opacity-5 d-none"></div>
+            <div id="voteResult" class="mt-4 p-3 rounded-4 bg-light d-none small"></div>
         </div>
     </div>
 </div>

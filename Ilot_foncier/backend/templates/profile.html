@@ -30,12 +30,53 @@
                     <h4 class="fw-bold mb-1">{{ user.full_name }}</h4>
                     <p class="text-muted small mb-4">{{ user.get_role_display }}</p>
 
-                    <div class="p-3 bg-light rounded-4 mb-4 text-start">
+                    <div class="p-3 bg-light rounded-4 mb-3 text-start">
+                        <small class="text-muted d-block mb-1">Date de Naissance</small>
+                        <span class="fw-bold">{{ user.birth_date|date:"d F Y"|default:"Non renseignée" }}</span>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-4 mb-3 text-start">
+                        <div class="row g-2">
+                            <div class="col-6 border-end">
+                                <small class="text-muted d-block mb-1">Pays</small>
+                                <span class="fw-bold">
+                                    {% if user.country == 'Benin' %}🇧🇯
+                                    {% elif user.country == 'France' %}🇫🇷
+                                    {% elif user.country == 'Togo' %}🇹🇬
+                                    {% elif user.country == "Cote d'Ivoire" %}🇨🇮
+                                    {% elif user.country == 'Nigeria' %}🇳🇬
+                                    {% elif user.country == 'USA' %}🇺🇸
+                                    {% endif %}
+                                    {{ user.country }}
+                                </span>
+                            </div>
+                            <div class="col-6 ps-3">
+                                <small class="text-muted d-block mb-1">
+                                    {% if user.country == 'Benin' %}Arrondissement
+                                    {% elif user.country == 'France' %}Ville
+                                    {% elif user.country == 'Togo' %}Préfecture
+                                    {% elif user.country == "Cote d'Ivoire" %}S-Préfecture
+                                    {% else %}Circonscription{% endif %}
+                                </small>
+                                <span class="fw-bold text-truncate d-block">{{ user.district|default:"-" }}</span>
+                            </div>
+                        </div>
+                        <hr class="my-2 opacity-10">
+                        <small class="text-muted d-block mb-1">
+                            {% if user.country == 'Benin' %}Quartier / Village
+                            {% elif user.country == 'France' %}Quartier / Rue
+                            {% else %}Localité{% endif %}
+                        </small>
+                        <span class="fw-bold">{{ user.village|default:"-" }}</span>
+                    </div>
+
+                    <div
+                        class="p-3 bg-primary bg-opacity-5 border border-primary border-opacity-10 rounded-4 mb-4 text-start">
                         <small class="text-muted d-block mb-1">Adresse Wallet</small>
                         <code class="text-primary small text-break">{{ user.wallet_address }}</code>
                     </div>
 
-                    <button class="btn btn-outline-primary w-100 rounded-3">Modifier mes infos</button>
+                    <button class="btn btn-outline-primary w-100 rounded-3">Mettre à jour mes informations</button>
                 </div>
             </div>
 
