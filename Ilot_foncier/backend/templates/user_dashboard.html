@@ -104,10 +104,12 @@
                     class="btn btn-outline-secondary rounded-3 fw-bold">Consulter le dossier complet</a>
                 {% if prop.status == 'DRAFT' %}
                 <button class="btn btn-citizen">Lancer la Validation Communautaire</button>
-                {% elif prop.status == 'ON_CHAIN' %}
-                <button class="btn btn-success text-white fw-bold" onclick="listForSale('{{ prop.id }}')">Mettre en
-                    vente</button>
                 {% endif %}
+
+                <a href="{% url 'web_create_listing' prop.id %}"
+                    class="btn {% if prop.status == 'ON_CHAIN' %}btn-success{% else %}btn-outline-success{% endif %} fw-bold">
+                    Mettre en vente {% if prop.status != 'ON_CHAIN' %}(Pré-listing){% endif %}
+                </a>
             </div>
         </div>
     </div>
@@ -125,35 +127,4 @@
 </div>
 {% endif %}
 
-<script>
-    async function listForSale(propId) {
-        const price = prompt("Entrez le prix de vente en FCFA :");
-        if (!price) return;
-
-        const cryptoPrice = (parseFloat(price) / 655).toFixed(2); // Simulation conversion cUSD
-
-        try {
-            const res = await fetch('/api/marketplace/listings/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    property_id: propId,
-                    seller_wallet: "{{ user.wallet_address|default:'' }}",
-                    price_fiat: price,
-                    price_crypto: cryptoPrice
-                })
-            });
-
-            if (res.ok) {
-                alert("Votre terrain est maintenant en vente sur la Marketplace !");
-                location.reload();
-            } else {
-                const err = await res.json();
-                alert("Erreur : " + err.error);
-            }
-        } catch (e) {
-            alert("Erreur de connexion.");
-        }
-    }
-</script>
 {% endblock %}

@@ -140,17 +140,13 @@
                         🛒 Marketplace
                     </a>
                 </div>
-                {% if request.resolver_match.url_name != "web_login" and request.resolver_match.url_name !=
-                "web_register" and request.resolver_match.url_name != "web_password_reset" %}
                 <div class="me-3 text-end d-none d-md-block">
                     <small class="text-muted d-block">Connecté en tant que</small>
-                    <span class="fw-bold" id="navUserName">{% if user %}{{ user.full_name }}{% else %}Citoyen{%
-                        endif%}</span>
+                    <span class="fw-bold" id="navUserName">{% if user %}{{ user.full_name }}{% else %}Citoyen{% endif %}</span>
                 </div>
                 <div class="rounded-circle bg-light p-2 border">
                     👤
                 </div>
-                {% endif %}
             </div>
         </div>
     </nav>

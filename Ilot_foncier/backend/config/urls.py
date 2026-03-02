@@ -13,7 +13,7 @@ from identity.ussd_views import web_ussd, USSDGateway
 from identity.api_views import UserProfileAPI
 from identity.views import AuthAPI
 from identity.password_reset_views import PasswordResetAPI
-from marketplace.views import ListingListAPI, web_marketplace
+from marketplace.views import ListingListAPI, web_marketplace, web_create_listing
 from config.swagger_views import swagger_ui
 
 urlpatterns = [
@@ -27,6 +27,7 @@ urlpatterns = [
     path('register/', web_register_user, name='web_register'),
     path('add-property/<str:wallet>/', web_add_property, name='web_add_property'),
     path('marketplace/', web_marketplace, name='web_marketplace'),
+    path('marketplace/create/<uuid:property_id>/', web_create_listing, name='web_create_listing'),
     path('dashboard/<str:wallet>/', user_dashboard, name='user_dashboard'),
     path('profile/<str:wallet>/', web_profile, name='web_profile'),
     path('property/<uuid:pk>/', web_property_detail, name='web_property_detail'),

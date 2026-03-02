@@ -148,6 +148,71 @@
     </div>
 </div>
 
+<!-- Messages Section -->
+<div class="row g-4 mt-4">
+    <!-- Send Message -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Envoyer un Message
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="recipient" class="form-label">Destinataire</label>
+                        <select class="form-select" id="recipient" name="recipient" required>
+                            <option value="">Choisir un destinataire</option>
+                            {% for student in students %}
+                            <option value="{{ student.username }}">{{ student.first_name }} {{ student.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Message</label>
+                        <textarea class="form-control" id="content" name="content" rows="3" placeholder="Tapez votre message..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-paper-plane me-2"></i>Envoyer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Messages -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-envelope me-2"></i>
+                    Messages Récents
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    <div class="list-group list-group-flush">
+                        {% for message in messages %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ message.sender.first_name }} {{ message.sender.last_name }}</h6>
+                                <small>{{ message.sent_at|date:"d/m H:i" }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.content }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucun message récent.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .stat-card {
     transition: transform 0.3s ease;

@@ -1,5 +1,5 @@
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +28,22 @@ def web_marketplace(request):
         'listings': listings,
         'listings_json': listings_data
     })
+
+def web_create_listing(request, property_id):
+    """Vue HTML pour mettre un terrain en vente."""
+    try:
+        prop = Property.objects.get(id=property_id)
+        
+        # Sécurité : Seul le propriétaire peut voir ce formulaire
+        if request.user.is_authenticated and prop.owner_wallet != request.user:
+            return redirect('login_home')
+            
+        return render(request, 'create_listing.html', {
+            'property': prop,
+            'user': request.user if request.user.is_authenticated else prop.owner_wallet
+        })
+    except Property.DoesNotExist:
+        return redirect('web_marketplace')
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListingListAPI(View):
@@ -63,9 +79,9 @@ class ListingListAPI(View):
             except Property.DoesNotExist:
                 return JsonResponse({'error': 'Property not found'}, status=404)
 
-            # 2. RÈGLE MÉTIER : Seules les propriétés validées (ON_CHAIN) peuvent être vendues
-            if prop.status != Property.Status.ON_CHAIN:
-                return JsonResponse({'error': 'Only validated (ON_CHAIN) properties can be listed for sale'}, status=400)
+            # 2. RÈGLE MÉTIER : Seules les propriétés validées ou en attestation peuvent être listées
+            if prop.status not in [Property.Status.ON_CHAIN, Property.Status.PENDING_SURVEYOR]:
+                return JsonResponse({'error': 'Only validated or pending surveyor properties can be listed for sale'}, status=400)
 
             # 3. RÈGLE MÉTIER : Le vendeur doit être le propriétaire
             if prop.owner_wallet.wallet_address != seller_wallet:

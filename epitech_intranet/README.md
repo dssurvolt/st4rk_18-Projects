@@ -1,111 +1,76 @@
-# 🎓 Epitech Intranet – Django Project
+# 🎓 Epitech Intranet – Full Django Project
 
 ## 📌 Description
 
-Ce projet est une implémentation d’un **mini intranet étudiant** développé avec **Django**.
-Il reprend certains concepts de l’intranet Epitech : gestion des étudiants, modules, notes, notifications et messagerie interne.
+Ce projet est une implémentation moderne d’un **mini intranet étudiant** développé entièrement avec **Django**.
+Il reproduit certains concepts de l’intranet Epitech : gestion des étudiants, modules, notes, notifications et messagerie interne.
 
 Il s’agit d’un projet **full-stack back-end Django** destiné à :
 
-* Approfondir la pratique de Django (authentification, ORM, signaux, admin, templates).
-* Mettre en place une architecture claire et réutilisable.
+* Approfondir la pratique de Django (modèles, vues, templates, sécurité).
+* Créer une architecture claire et réutilisable.
 * Servir de démonstration dans un portfolio de développeur.
 
 ---
 
 ## 🚀 Fonctionnalités principales
 
-* **Gestion des utilisateurs (étudiants)**
-
-  * Basée sur un modèle custom `Student` (héritant de `AbstractUser`).
-  * Champs supplémentaires : promo, GitHub, email Epitech.
-  * Interface d’admin personnalisée.
-
-* **Modules et Notes**
-
-  * Chaque étudiant peut être inscrit dans plusieurs modules.
-  * Notes gérées via le modèle `Grade`.
-
-* **Notifications**
-
-  * Système de notifications relié aux étudiants.
-  * Possibilité de marquer les notifications comme lues.
-
-* **Messagerie interne**
-
-  * Envoi de messages entre étudiants.
-  * Affichage des 5 derniers messages reçus dans le dashboard.
-
-* **Profils et rôles**
-
-  * Modèle `UserProfile` lié à chaque utilisateur.
-  * Gestion des rôles (Étudiant, Admin).
-  * Possibilité d’ajouter un avatar.
-
-* **Dashboard étudiant**
-
-  * Vue centralisée avec modules, notes, notifications et messages récents.
+* **Authentification** : Login/logout sécurisé avec session Django.
+* **Gestion des utilisateurs (étudiants)** : CRUD complet via admin.
+* **Modules et Notes** : Association étudiants-modules, gestion des grades.
+* **Notifications** : Système de notifications avec marquage lu/non lu.
+* **Messagerie interne** : Envoi/réception de messages entre étudiants directement depuis dashboard.
+* **Dashboard** : Interface moderne avec stats, modules, notes, notifications, messages.
+* **Profils et rôles** : Gestion des rôles (Étudiant, Admin) avec avatars.
+* **Design moderne** : Bootstrap 5 avec palette Epitech (rouge, bleu, vert).
 
 ---
 
 ## ⚙️ Environnement & Dépendances
 
-### 🔧 Prérequis
+### Variables d'environnement
 
-* **Python** ≥ 3.10 (testé sur Python 3.13)
-* **pip** ≥ 25.x
-* **virtualenv** (fortement recommandé)
-* **Django** ≥ 5.0
-* Base de données par défaut : **SQLite3** (fichier `db.sqlite3`)
+Créer un fichier `.env` à la racine :
 
-### 📦 Installation des dépendances
-
-Depuis la racine du projet :
-
-```bash
-# 1. Créer un environnement virtuel
-python3 -m venv venv
-
-# 2. Activer l’environnement
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# 3. Installer Django et dépendances
-pip install --upgrade pip
-pip install django
+```
+SECRET_KEY=votre-cle-secrete-très-longue-et-aléatoire
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+DATABASE_URL=sqlite:///db.sqlite3  # ou PostgreSQL en prod
 ```
 
-*(optionnel)* : si un fichier `requirements.txt` est fourni :
+### 🔧 Prérequis
+
+* **Python** ≥ 3.10
+* **Django** ≥ 5.0
+
+### 📦 Installation
 
 ```bash
 pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
 ```
 
 ---
 
 ## ▶️ Lancement du projet
 
-### 1. Appliquer les migrations
+### Avec Docker (recommandé)
 
 ```bash
-python manage.py migrate
+docker-compose up --build
 ```
 
-### 2. Créer un superutilisateur
+Visite [http://localhost:8000](http://localhost:8000) pour l'app Django.
 
-```bash
-python manage.py createsuperuser
-```
-
-👉 Cela permet de se connecter à `/admin`.
-
-### 3. Lancer le serveur local
+### Manuel
 
 ```bash
 python manage.py runserver
 ```
 
-Le site est disponible sur : [http://127.0.0.1:8000](http://127.0.0.1:8000).
+Visite [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ---
 
@@ -113,18 +78,17 @@ Le site est disponible sur : [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ```
 epitech_intranet/
-│
-├── core/                     # App principale
-│   ├── models.py             # Modèles (Student, Module, Grade, Message, etc.)
-│   ├── views.py              # Vues (login, dashboard, messaging, etc.)
+├── core/                     # App Django principale
+│   ├── models.py             # Modèles (Student, Module, etc.)
+│   ├── views.py              # Vues (login, dashboard, messaging)
 │   ├── urls.py               # Routage des endpoints
 │   ├── admin.py              # Configuration de l'admin Django
 │   ├── signals.py            # Création automatique des UserProfiles
-│   └── templates/core/       # Templates HTML
-│
-├── manage.py                 # Script principal Django
-├── db.sqlite3                # Base de données locale (auto-générée)
-└── README.md                 # Documentation du projet
+│   └── templates/core/       # Templates HTML avec Bootstrap
+├── config/                   # Config Django sécurisée
+├── manage.py
+├── db.sqlite3
+└── README.md
 ```
 
 ---
@@ -140,36 +104,27 @@ epitech_intranet/
 
 ## 🧪 Tests en local
 
-* Ajoute quelques étudiants dans `/admin` ou via `createsuperuser`.
-* Connecte-toi sur `/login`.
-* Envoie un message à un autre utilisateur depuis `/send-message/`.
-* Vérifie ton dashboard `/dashboard/`.
+1. Lance le serveur Django.
+2. Crée un superuser via `/admin`.
+3. Connecte-toi sur `/login`.
+4. Envoie un message depuis le dashboard.
+5. Vérifie les stats et modules.
 
 ---
 
-## 🌐 Déploiement
+## 🌟 Améliorations appliquées
 
-Ce projet peut être déployé sur :
-
-* **Heroku** (via `gunicorn` + `Procfile`)
-* **Docker** (image Python + dépendances Django)
-* **Serveur dédié** (Nginx + Gunicorn + PostgreSQL recommandé pour la prod)
-
----
-
-## 📌 Points techniques intéressants
-
-* Utilisation de `AbstractUser` pour personnaliser le modèle `Student`.
-* Gestion des signaux Django (`post_save`) pour auto-créer les `UserProfile`.
-* Relations entre modèles : `ManyToMany` (Modules ↔ Étudiants), `ForeignKey` (Notes, Messages).
-* Décoration `@login_required` pour sécuriser l’accès au profil utilisateur.
-* Intégration du système de **flash messages** pour feedback utilisateur.
+* **Design moderne** : Bootstrap 5 avec palette attrayante Epitech.
+* **Sécurité** : Variables d'environnement, CSRF, sessions.
+* **DevOps** : Docker, migrations, admin.
+* **Fonctionnalité** : Messagerie intégrée au dashboard.
+* **Performance** : Requêtes optimisées, templates efficaces.
 
 ---
 
 ## 👨‍💻 Auteur
 
-Projet développé par **Rakib Sobabe**
+Projet développé par **Rakib Sobabe** avec refonte full Django par senior dev.
 📧 [sobaberakib4@gmail.com](mailto:sobaberakib4@gmail.com)
 
 ---

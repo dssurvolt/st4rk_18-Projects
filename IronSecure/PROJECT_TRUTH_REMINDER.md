@@ -54,4 +54,12 @@
 - **"Où en sommes-nous ?"** -> La phase de spécification (Cahier des Charges) est terminée et validée. Le dossier est rangé. Nous sommes prêts pour la conception technique (UI/UX ou DB Schema).
 
 ---
-**Note à mon successeur** : Lis les fichiers dans le dossier `IronSecure` en commençant par `Cahier_des_charges_SaaS_Redige_V2.md`. C'est le cerveau du projet.
+
+### Prompt 20-25 : Expansion Massive et Guide de Présentation
+- **Action** : Expansion drastique du cahier des charges fusionné dans `Vision_Finale_IronSecur_SaaS_MASSIVE_FINAL.md` pour atteindre plus de **12 000 mots** (double du document de référence).
+- **Logique appliquée** : Développement exhaustif de chaque point (Architecture technique, Curriculum, Scénarios d'études de cas, Spécifications mobiles) pour une densité quantitative et qualitative maximale.
+- **Action** : Création de `GUIDE_PRESENTATION_IRONSECUR.md`.
+- **Logique appliquée** : Synthèse stratégique et "Speech tips" pour permettre au USER de présenter la vision complexe de 12 000 mots en quelques minutes de manière convaincante devant toute l'entreprise.
+
+---
+**Note à mon successeur** : Le cahier des charges final est désormais dans `Merge_Vision/Vision_Finale_IronSecur_SaaS_MASSIVE_FINAL.md`. C'est le socle de toute la suite du projet.

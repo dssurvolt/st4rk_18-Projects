@@ -33,12 +33,28 @@ def dashboard(request):
     grades = Grade.objects.filter(student=student)
     notifications = student.notifications.filter(is_read=False).order_by('-created_at')
     messages = request.user.received_messages.order_by('-sent_at')[:5]
+    students = Student.objects.exclude(id=student.id)  # Pour la liste des destinataires
+
+    if request.method == 'POST':
+        recipient_username = request.POST.get('recipient')
+        content = request.POST.get('content')
+        if recipient_username and content:
+            try:
+                recipient = Student.objects.get(username=recipient_username)
+                Message.objects.create(sender=request.user, recipient=recipient, content=content)
+                flash_messages.success(request, f"Message envoyé à {recipient_username}")
+            except Student.DoesNotExist:
+                flash_messages.error(request, "Destinataire introuvable.")
+        else:
+            flash_messages.error(request, "Champs requis manquants.")
+        return redirect('dashboard')
 
     return render(request, 'core/dashboard.html', {
         'modules': modules,
         'grades': grades,
         'notifications': notifications,
         'messages': messages,
+        'students': students,
     })
 
 def send_message(request):
