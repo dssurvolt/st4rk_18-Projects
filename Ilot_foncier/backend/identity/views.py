@@ -17,7 +17,6 @@ class AuthAPI(View):
             return self.login(request)
         elif action == 'logout':
             return self.logout(request)
-            return self.login(request)
         else:
             return JsonResponse({'error': 'Invalid action'}, status=400)
     

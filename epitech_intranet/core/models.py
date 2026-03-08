@@ -1,10 +1,8 @@
 from django.db import models
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.conf import settings
-
 
 class Student(AbstractUser):
     promo = models.CharField(max_length=10)
@@ -15,15 +13,14 @@ class Student(AbstractUser):
         return f"{self.first_name} {self.last_name} ({self.username})"
 
 class Module(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    students = models.ManyToManyField(Student, related_name='modules')
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
 
     def __str__(self):
         return self.name
 
 class Grade(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     grade = models.FloatField()
 
@@ -33,8 +30,8 @@ class Grade(models.Model):
 class Notification(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='notifications')
     content = models.CharField(max_length=255)
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     def __str__(self):
         return f"{self.student.username} - {self.content[:20]}..."
@@ -43,7 +40,7 @@ class Message(models.Model):
     sender = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='sent_messages')
     recipient = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
-    sent_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     def __str__(self):
         return f"{self.sender} -> {self.recipient} : {self.content[:30]}"

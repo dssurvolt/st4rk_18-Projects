@@ -1,0 +1,151 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Configuration 2FA - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-5">
+    <h1 class="display-5 fw-bold mb-3">
+        <i class="fas fa-shield-alt text-primary me-3"></i>
+        Authentification à Deux Facteurs (2FA)
+    </h1>
+    <p class="lead text-muted">Sécurisez votre compte avec l'authentification 2FA</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>
+                    Configuration 2FA
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Scannez le QR code ci-dessous avec votre application d'authentification (Google Authenticator, Authy, etc.)
+                    ou saisissez manuellement la clé secrète.
+                </div>
+
+                <div class="text-center mb-4">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code 2FA" class="img-fluid border rounded">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Clé secrète (si scan impossible) :</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ secret }}" readonly id="secretKey">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copySecret()">
+                            <i class="fas fa-copy"></i> Copier
+                        </button>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important :</strong> Assurez-vous d'avoir configuré votre application avant de valider.
+                        Vous devrez saisir un code de vérification pour activer la 2FA.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="otp_verify" class="form-label">Code de vérification (6 chiffres) :</label>
+                        <input type="text" class="form-control" id="otp_verify" name="otp_verify" 
+                               placeholder="Entrez le code de votre app" maxlength="6" pattern="[0-9]{6}" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Activer 2FA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Comment ça marche ?
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol class="list-unstyled">
+                    <li class="mb-3">
+                        <i class="fas fa-mobile-alt text-info me-2"></i>
+                        Installez une app d'authentification
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-qrcode text-info me-2"></i>
+                        Scannez le QR code ou saisissez la clé
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-key text-info me-2"></i>
+                        Entrez le code généré pour valider
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-shield-alt text-info me-2"></i>
+                        Votre compte est maintenant sécurisé !
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Applications recommandées
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>Google Authenticator</strong></li>
+                    <li><strong>Authy</strong></li>
+                    <li><strong>Microsoft Authenticator</strong></li>
+                    <li><strong>FreeOTP</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{% url 'profile' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour au Profil
+    </a>
+</div>
+
+<script>
+function copySecret() {
+    const secretInput = document.getElementById('secretKey');
+    secretInput.select();
+    document.execCommand('copy');
+    
+    // Feedback visuel
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Copié!';
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add('btn-success');
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+</script>
+
+<style>
+.input-group .form-control {
+    border-right: 0;
+}
+
+.input-group .btn {
+    border-left: 0;
+}
+</style>
+{% endblock %}

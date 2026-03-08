@@ -168,7 +168,12 @@
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <h6 class="fw-bold mb-0">{{ w.first_name }} {{ w.last_name }}</h6>
-                                <small class="text-muted">{{ w.phone }}</small>
+                                <small class="text-muted d-block">{{ w.phone }}</small>
+                                {% if w.email %}
+                                <small class="text-primary d-block mt-1">
+                                    📧 {{ w.email }}
+                                </small>
+                                {% endif %}
                             </div>
                             <span class="badge bg-white text-muted border small">{{ w.get_gender_display }}</span>
                         </div>
@@ -252,7 +257,25 @@
             <h5 class="fw-bold mb-3">Actions Disponibles</h5>
             <div class="d-grid gap-2" id="actionButtons">
                 <!-- Les boutons d'action seront injectés par JS selon le rôle (Propriétaire / Acheteur) -->
+                {% if listing %}
+                {% if user.is_authenticated and user == property.owner_wallet %}
+                <div class="alert alert-info rounded-3 small">Vous êtes le propriétaire de cette annonce.</div>
+                {% else %}
+                <div
+                    class="p-3 bg-primary bg-opacity-5 rounded-4 mb-3 text-center border border-primary border-opacity-10">
+                    <h4 class="fw-bold text-primary mb-1">{{ listing.price_fiat|floatformat:0 }} FCFA</h4>
+                    <p class="small text-muted mb-0">Prix de vente direct</p>
+                </div>
+                <a href="{% url 'web_choose_notary' property_id=property.id %}"
+                    class="btn btn-primary d-block w-100 py-3 rounded-pill fw-bold shadow-sm mb-2">
+                    <i class="bi bi-shield-lock-fill me-2"></i> SÉCURISER L'ACHAT (NOTAIRE)
+                </a>
+                <button class="btn btn-outline-citizen py-2 w-100 small" onclick="contactSeller()">Demander plus
+                    d'infos</button>
+                {% endif %}
+                {% else %}
                 <button class="btn btn-citizen py-3" onclick="contactSeller()">CONTACTER LE VENDEUR</button>
+                {% endif %}
                 <button class="btn btn-outline-secondary py-2">Demander le Dossier Certifié (PDF)</button>
             </div>
         </div>

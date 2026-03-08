@@ -180,6 +180,10 @@
                 class="{% if request.resolver_match.url_name == 'web_ussd' %}active{% endif %}">
                 <span class="me-2">📱</span> USSD Sim
             </a>
+            <a href="{% url 'pmf_dashboard' %}"
+                class="{% if request.resolver_match.url_name == 'pmf_dashboard' %}active{% endif %}">
+                <span class="me-2">🚀</span> PMF Metric
+            </a>
             <hr class="mx-3 opacity-10">
             <div class="px-4 mb-2"><small class="text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Liens
                     Externes</small></div>

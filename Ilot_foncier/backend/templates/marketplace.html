@@ -78,10 +78,37 @@
                 <h3 class="fw-bold text-white">4.2M FCFA</h3>
             </div>
             <hr class="border-white border-opacity-25">
-            <p class="small text-white text-opacity-75">
+            <p class="small text-white text-opacity-75 mb-0">
                 Toutes les transactions sur la marketplace iLôt sont sécurisées par des contrats séquestres intelligents
                 sur la blockchain Polygon.
             </p>
+        </div>
+
+        <!-- Portail Notaire Rapide -->
+        <div class="citizen-card h-auto mt-4 border-2 border-dashed border-primary bg-primary bg-opacity-5">
+            <h6 class="fw-bold text-primary mb-3">⚖️ ESPACE NOTAIRE</h6>
+            <p class="small text-muted mb-3">Accédez à votre espace professionnel pour gérer les dossiers de mutation.
+            </p>
+            <a href="{% url 'notary_dashboard' %}" class="btn btn-outline-primary btn-sm w-100 fw-bold">DASHBOARD
+                NOTAIRE</a>
+        </div>
+
+        <!-- Notaires de Confiance -->
+        <div class="mt-5">
+            <h6 class="fw-bold mb-3">🛡️ NOTAIRES DE CONFIANCE</h6>
+            <div class="d-grid gap-2">
+                {% for n in featured_notaries %}
+                <div class="p-3 bg-white rounded-4 border shadow-sm d-flex align-items-center">
+                    <div class="rounded-circle bg-light p-2 me-3">💼</div>
+                    <div>
+                        <small class="fw-bold d-block">Me {{ n.name }}</small>
+                        <small class="text-muted" style="font-size: 0.7rem;">{{ n.office_name }}</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="small text-muted fst-italic">Référencement en cours...</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
@@ -169,12 +196,34 @@
 </style>
 
 <script>
-    function contactSeller(listingId, isCertified) {
-        if (isCertified === 'True') {
-            alert("✅ Dossier Certifié détecté !\n\nVotre demande a été envoyée au vendeur. Vous recevrez une notification dès qu'il acceptera de vous partager les documents officiels (PV de géomètre, attestations des témoins).");
-        } else {
-            alert("⚠️ Dossier en cours de certification.\n\nVous pouvez contacter le vendeur, mais notez que les documents officiels ne sont pas encore tous validés par les experts iLôt.");
+    async function contactSeller(listingId, isCertified) {
+        const userId = "{{ user.id }}";
+
+        if (!userId || userId === "None") {
+            alert("Veuillez vous connecter pour contacter le vendeur.");
+            window.location.href = "{% url 'web_login' %}";
+            return;
         }
+
+        // Tracking PMF en temps réel
+        try {
+            await fetch("{% url 'api_marketplace_inquire' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    listing_id: listingId,
+                    user_id: userId
+                })
+            });
+        } catch (e) {
+            console.error("Erreur tracking PMF:", e);
+        }
+
+        // Redirection vers le chat privé (Phase 4.1)
+        window.location.href = `/chat/start/${listingId}/`;
     }
 </script>
 {% endblock %}

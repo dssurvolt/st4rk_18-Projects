@@ -272,6 +272,12 @@
                     <label class="form-label small text-muted">TÉLÉPHONE</label>
                     <input type="tel" class="form-control border-0 witness-phone" id="w_phone_${num}" required>
                 </div>
+                <div class="col-12">
+                    <label class="form-label small text-muted">ADRESSE EMAIL (Pour validation)</label>
+                    <input type="email" class="form-control border-0 witness-email" id="w_email_${num}" 
+                        placeholder="exemple@email.com" required>
+                    <div class="email-error text-danger x-small d-none" id="w_email_error_${num}">Format d'email invalide</div>
+                </div>
                 <div class="col-12 mt-3">
                     <label class="form-label small fw-bold">PIÈCE D'IDENTITÉ (PHOTO/SCAN)</label>
                     <input type="file" class="form-control border-0 witness-id-card" id="w_idcard_${num}" accept="image/*,application/pdf" required>
@@ -284,6 +290,21 @@
     document.getElementById('addWitnessBtn').onclick = () => {
         witnessCount++;
         createWitness(witnessCount);
+
+        // Validation email dynamique
+        const emailInput = document.getElementById(`w_email_${witnessCount}`);
+        const errorDiv = document.getElementById(`w_email_error_${witnessCount}`);
+
+        emailInput.onblur = () => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailInput.value && !emailRegex.test(emailInput.value)) {
+                errorDiv.classList.remove('d-none');
+                emailInput.classList.add('is-invalid');
+            } else {
+                errorDiv.classList.add('d-none');
+                emailInput.classList.remove('is-invalid');
+            }
+        };
     };
 
     document.getElementById('removeWitnessBtn').onclick = () => {
@@ -438,6 +459,21 @@
     for (let i = 1; i <= 3; i++) {
         witnessCount++;
         createWitness(witnessCount);
+
+        // Validation email pour les témoins initiaux
+        const num = witnessCount;
+        const emailInput = document.getElementById(`w_email_${num}`);
+        const errorDiv = document.getElementById(`w_email_error_${num}`);
+        emailInput.onblur = () => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailInput.value && !emailRegex.test(emailInput.value)) {
+                errorDiv.classList.remove('d-none');
+                emailInput.classList.add('is-invalid');
+            } else {
+                errorDiv.classList.add('d-none');
+                emailInput.classList.remove('is-invalid');
+            }
+        };
     }
 
     document.getElementById('addBoundaryPoint').onclick = () => {
@@ -515,13 +551,23 @@
         }
 
         const witnesses = [];
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         for (let i = 1; i <= witnessCount; i++) {
+            const email = document.getElementById(`w_email_${i}`).value.trim();
+            if (!emailRegex.test(email)) {
+                alert(`L'adresse email du témoin #${i} est invalide.`);
+                btn.disabled = false;
+                btn.innerText = originalText;
+                return;
+            }
+
             witnesses.push({
                 last_name: document.getElementById(`w_name_${i}`).value,
                 first_name: document.getElementById(`w_firstname_${i}`).value,
                 birth_date: document.getElementById(`w_birth_${i}`).value,
                 gender: document.getElementById(`w_gender_${i}`).value,
-                phone: document.getElementById(`w_phone_${i}`).value
+                phone: document.getElementById(`w_phone_${i}`).value,
+                email: email
             });
         }
 

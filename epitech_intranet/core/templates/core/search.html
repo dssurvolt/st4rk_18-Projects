@@ -1,0 +1,78 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Recherche - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-5">
+    <h1 class="display-5 fw-bold mb-3">
+        <i class="fas fa-search text-primary me-3"></i>
+        Recherche
+    </h1>
+    <p class="lead text-muted">Rechercher dans vos messages</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- Formulaire de recherche -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" action="{% url 'search' %}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="q" value="{{ query }}" 
+                               placeholder="Rechercher dans vos messages..." required>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search me-2"></i>Rechercher
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        {% if query %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        Résultats pour "<strong>{{ query }}</strong>"
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                        <div class="list-group list-group-flush">
+                            {% for result in results %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-envelope me-2 text-primary"></i>
+                                        Message de {{ result.sender }} à {{ result.recipient }}
+                                    </h6>
+                                    <small class="text-muted">{{ result.sent_at|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    {{ result.content|truncatechars:200 }}
+                                    {% if result.content|length > 200 %}
+                                        <span class="text-muted">...</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucun résultat</h5>
+                            <p class="text-muted">Aucun message ne correspond à votre recherche.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour au Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Messages - EPITECH Intranet{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-5">
+    <h1 class="display-5 fw-bold mb-3">
+        <i class="fas fa-envelope text-primary me-3"></i>
+        Mes Messages
+    </h1>
+    <p class="lead text-muted">Tous vos messages reçus</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if messages %}
+            <div class="list-group list-group-flush">
+                {% for message in messages %}
+                <div class="list-group-item px-0">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            {{ message.sender.first_name }} {{ message.sender.last_name }}
+                            <small class="text-muted">(@{{ message.sender.username }})</small>
+                        </h6>
+                        <small class="text-muted">{{ message.sent_at|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    <p class="mb-1">{{ message.content }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Messages pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if messages.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">&laquo; Première</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ messages.previous_page_number }}">Précédente</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page {{ messages.number }} sur {{ messages.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if messages.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ messages.next_page_number }}">Suivante</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ messages.paginator.num_pages }}">Dernière &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-envelope-open fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun message</h5>
+                <p class="text-muted">Vous n'avez reçu aucun message pour le moment.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour au Dashboard
+    </a>
+</div>
+{% endblock %}

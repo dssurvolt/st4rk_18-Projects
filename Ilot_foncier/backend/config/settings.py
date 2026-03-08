@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'land_registry',
     'consensus',
     'marketplace',
+    'notaries',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'marketplace.context_processors.notification_count',
             ],
         },
     },
@@ -142,15 +144,12 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# Email Configuration (Development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@ilotfoncier.bj'
-EMAIL_HOST_USER = 'noreply@ilotfoncier.bj'
-
-# Pour production, utiliser:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
+# Email Configuration (Gmail Production)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'sobaberakib4@gmail.com'
+EMAIL_HOST_PASSWORD = 'msfxtjbvpyunzwti'
+DEFAULT_FROM_EMAIL = 'iLôt Foncier <sobaberakib4@gmail.com>'

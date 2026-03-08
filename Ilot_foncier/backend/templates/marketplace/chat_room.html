@@ -1,0 +1,174 @@
+{% extends 'base_citizen.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'web_my_chats' %}"
+                    class="btn btn-outline-secondary rounded-circle me-3 p-2 d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;">
+                    ⬅️
+                </a>
+                <div>
+                    <h4 class="fw-bold mb-0">Discussion avec {{ other_user.full_name }}</h4>
+                    <p class="text-muted small mb-0">À propos de : {{ room.listing.property.village|default:"Parcelle"
+                        }}</p>
+                </div>
+            </div>
+            <div class="badge bg-primary rounded-pill">Prix: {{ room.listing.price_fiat }} FCFA</div>
+        </div>
+
+        <div class="citizen-card p-0 overflow-hidden d-flex flex-column" style="height: 600px;">
+            <!-- Zone des messages -->
+            <div id="chat-messages" class="flex-grow-1 p-4 overflow-y-auto chat-bg">
+                {% for msg in chat_messages %}
+                <div class="d-flex {% if msg.sender == user %}justify-content-end{% endif %} mb-3">
+                    <div class="max-60">
+                        <div
+                            class="message-bubble p-3 shadow-sm {% if msg.sender == user %}sender-bubble{% else %}receiver-bubble{% endif %}">
+                            <p class="mb-1">{{ msg.content }}</p>
+                            <div class="text-end message-time">
+                                {{ msg.created_at|date:"H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <div class="display-1 mb-3">💬</div>
+                    <p>Démarrez la discussion pour sécuriser cette acquisition !</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Barre de saisie -->
+            <div class="p-4 bg-white border-top">
+                <form id="chat-form" class="row g-2">
+                    <div class="col">
+                        <input type="text" id="message-input" class="form-control rounded-pill border-0 bg-light p-3"
+                            placeholder="Écrivez votre message ici..." autocomplete="off">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit"
+                            class="btn btn-primary rounded-circle p-3 d-flex align-items-center justify-content-center"
+                            style="width: 50px; height: 50px;">
+                            🚀
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Alerte sécurité Notaire -->
+        <div
+            class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-4 d-flex align-items-center">
+            <span class="fs-4 me-3">⚖️</span>
+            <p class="small text-dark mb-0">
+                <strong>Conseil de sécurité :</strong> Pour toute transaction, utilisez toujours le <strong>Folio
+                    iLôt</strong> avec un notaire certifié pour garantir le transfert légal de propriété.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const roomId = "{{ room.id }}";
+
+    // Scroll vers le bas à l'ouverture
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        messageInput.value = '';
+
+        try {
+            const response = await fetch("{% url 'api_chat_send' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    room_id: roomId,
+                    content: content
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                if (data.content.includes('[MASQUÉ')) {
+                    alert("🛡️ iLôt Shield : Vos coordonnées ont été masquées. Pour votre sécurité et la validité juridique de votre achat, toutes les discussions doivent rester sur la plateforme.");
+                }
+                appendMessage(data);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else {
+                alert("Erreur lors de l'envoi : " + data.error);
+            }
+        } catch (error) {
+            console.error("Erreur Chat:", error);
+        }
+    });
+
+    function appendMessage(data) {
+        const div = document.createElement('div');
+        div.className = 'd-flex justify-content-end mb-3';
+        div.innerHTML = `
+            <div class="max-60">
+                <div class="message-bubble p-3 shadow-sm sender-bubble">
+                    <p class="mb-1">${data.content}</p>
+                    <div class="text-end message-time">
+                        ${data.created_at}
+                    </div>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(div);
+    }
+
+    // Auto-refresh simulé (toutes les 10 secondes)
+    setInterval(() => {
+        location.reload();
+    }, 15000); 
+</script>
+
+<style>
+    .max-60 {
+        max-width: 80%;
+    }
+
+    .chat-bg {
+        background-color: #f8fafc;
+        background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
+    .message-bubble {
+        max-width: 400px;
+        border-radius: 20px;
+    }
+
+    .sender-bubble {
+        background-color: var(--bs-primary);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .receiver-bubble {
+        background-color: white;
+        color: var(--bs-dark);
+        border-bottom-left-radius: 4px;
+    }
+
+    .message-time {
+        font-size: 0.65rem;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}

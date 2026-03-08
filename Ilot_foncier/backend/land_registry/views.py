@@ -6,9 +6,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.db.models import Count
+from django.db import transaction
 from .models import Property, PropertyMedia, PropertyWitness, AuthorizedSurveyor
 from identity.models import User
 from consensus.models import ValidationRequest
+from marketplace.models import MarketplaceView
 
 # --- DASHBOARD VIEW (HTML) ---
 
@@ -96,21 +98,30 @@ def user_dashboard(request, wallet):
             except User.DoesNotExist:
                 pass
         
-        # ROBUSTESSE : Si l'utilisateur n'est pas trouvé via l'URL, 
-        # mais qu'une session est active, on utilise l'utilisateur connecté.
-        if not user and request.user.is_authenticated:
-            print(f"⚠️ User not found via URL '{identifier}', falling back to session user: {request.user}")
+        # SÉCURITÉ : Un utilisateur authentifié ne peut voir que SON PROPRE dashboard.
+        # Si un utilisateur tente d'accéder à un autre ID via l'URL, on le redirige vers le sien.
+        if request.user.is_authenticated:
+            if user and user != request.user:
+                 messages.warning(request, "Redirection vers votre propre tableau de bord.")
+                 return redirect('user_dashboard', wallet=str(request.user.id))
             user = request.user
-                
+        
         if not user:
-            return render(request, 'user_dashboard.html', {'error': 'Utilisateur non trouvé'})
+            # Cas où l'utilisateur n'est pas connecté et tente d'accéder via URL (ex: via lien public partagé)
+            messages.error(request, "Veuillez vous connecter pour accéder à cet espace.")
+            return redirect('web_login')
         
         user_properties = Property.objects.filter(owner_wallet=user).annotate(media_count=Count('media'))
         
+        # Récupérer les notifications récentes
+        from marketplace.models import Notification
+        notifications = Notification.objects.filter(user_wallet=user).order_by('-created_at')[:5]
+
         context = {
             'user': user,
             'properties': user_properties,
             'total_assets': user_properties.count(),
+            'notifications': notifications,
         }
         return render(request, 'user_dashboard.html', context)
     except Exception as e:
@@ -167,11 +178,30 @@ def web_property_detail(request, pk):
     """Vue HTML détaillée pour une propriété spécifique."""
     try:
         prop = Property.objects.get(pk=pk)
+        
+        # Traçabilité accrue : Enregistrement de la consultation de la fiche produit
+        try:
+            user = request.user if request.user.is_authenticated else None
+            MarketplaceView.objects.create(
+                user=user,
+                property=prop,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT'),
+                view_type='PROPERTY_DETAIL'
+            )
+        except Exception as e:
+            print(f"Erreur tracking MarketplaceView detail: {e}")
+
         media = prop.media.all()
+        # Vérifier si l'objet est en vente
+        from marketplace.models import Listing
+        listing = Listing.objects.filter(property=prop, status=Listing.Status.ACTIVE).first()
+
         return render(request, 'property_detail.html', {
             'property': prop,
             'media': media,
-            'owner': prop.owner_wallet
+            'owner': prop.owner_wallet,
+            'listing': listing
         })
     except Property.DoesNotExist:
         return render(request, 'property_detail.html', {'error': 'Propriété non trouvée'})
@@ -206,12 +236,16 @@ def web_profile(request, wallet):
             except:
                 pass
 
-        # ROBUSTESSE
+        # SÉCURITÉ : Rediriger vers son propre profil si on tente de voir celui d'un autre frauduleusement
+        # (Sauf si le profil est public, mais ici les profils iLôt sont privés par défaut)
+        if request.user.is_authenticated and user and user != request.user:
+            return redirect('web_profile', wallet=str(request.user.id))
+
         if not user and request.user.is_authenticated:
             user = request.user
 
         if not user:
-            return render(request, 'profile.html', {'error': 'Utilisateur non trouvé'})
+            return render(request, 'profile.html', {'error': 'Profil non trouvé ou non autorisé.'})
             
         return render(request, 'profile.html', {'user': user})
     except Exception:
@@ -260,207 +294,212 @@ class PropertyListAPI(View):
         return JsonResponse({'count': len(data), 'results': data})
 
     def post(self, request):
-        try:
-            if request.content_type.startswith('multipart/form-data') or request.content_type.startswith('application/x-www-form-urlencoded'):
-                data = request.POST
-                files = request.FILES.getlist('files')
-                gps_centroid = json.loads(data.get('gps_centroid', '{"lat":0, "lng":0}'))
-                gps_boundaries = json.loads(data.get('gps_boundaries', '[]'))
-                owner_wallet = data.get('owner_wallet')
-                owner_name = data.get('owner_name')
-                birth_date = data.get('birth_date')
-                user_country = data.get('user_country', 'Benin')
-                district = data.get('district')
-                village = data.get('village')
-                surveyor_id = data.get('surveyor_id')
-                surveyor_name = data.get('surveyor_name')
-                area_sqm = data.get('area_sqm')
-                area_cadastral = data.get('area_cadastral')
-                country = data.get('country', 'Benin')
-                witnesses_json = data.get('witnesses', '[]')
-            else:
-                body = json.loads(request.body)
-                owner_wallet = body.get('owner_wallet')
-                owner_name = body.get('owner_name')
-                birth_date = body.get('birth_date')
-                user_country = body.get('user_country', 'Benin')
-                district = body.get('district')
-                village = body.get('village')
-                surveyor_id = body.get('surveyor_id')
-                surveyor_name = body.get('surveyor_name')
-                area_sqm = body.get('area_sqm')
-                area_cadastral = body.get('area_cadastral')
-                country = body.get('country', 'Benin')
-                witnesses_json = json.dumps(body.get('witnesses', []))
-                gps_centroid = body.get('gps_centroid', {'lat': 0, 'lng': 0})
-                gps_boundaries = body.get('gps_boundaries', [])
-                files = []
+        """UC-03: Déposer un dossier de propriété (via API sécurisée)."""
+        with transaction.atomic():
+            try:
+                if request.content_type.startswith('multipart/form-data') or request.content_type.startswith('application/x-www-form-urlencoded'):
+                    data = request.POST
+                    files = request.FILES.getlist('files')
+                    gps_centroid = json.loads(data.get('gps_centroid', '{"lat":0, "lng":0}'))
+                    gps_boundaries = json.loads(data.get('gps_boundaries', '[]'))
+                    owner_wallet = data.get('owner_wallet')
+                    owner_name = data.get('owner_name')
+                    birth_date = data.get('birth_date')
+                    user_country = data.get('user_country', 'Benin')
+                    district = data.get('district')
+                    village = data.get('village')
+                    surveyor_id = data.get('surveyor_id')
+                    surveyor_name = data.get('surveyor_name')
+                    area_sqm = data.get('area_sqm')
+                    area_cadastral = data.get('area_cadastral')
+                    country = data.get('country', 'Benin')
+                    witnesses_json = data.get('witnesses', '[]')
+                else:
+                    body = json.loads(request.body)
+                    owner_wallet = body.get('owner_wallet')
+                    owner_name = body.get('owner_name')
+                    birth_date = body.get('birth_date')
+                    user_country = body.get('user_country', 'Benin')
+                    district = body.get('district')
+                    village = body.get('village')
+                    surveyor_id = body.get('surveyor_id')
+                    surveyor_name = body.get('surveyor_name')
+                    area_sqm = body.get('area_sqm')
+                    area_cadastral = body.get('area_cadastral')
+                    country = body.get('country', 'Benin')
+                    witnesses_json = json.dumps(body.get('witnesses', []))
+                    gps_centroid = body.get('gps_centroid', {'lat': 0, 'lng': 0})
+                    gps_boundaries = body.get('gps_boundaries', [])
+                    files = []
 
-            # Si le wallet n'est pas fourni (cas de l'inscription), on le génère
-            if not owner_wallet:
-                if not owner_name or not birth_date:
-                    return JsonResponse({'error': 'owner_name et birth_date requis pour la création de compte'}, status=400)
+                # VALIDATION PRÉALABLE DES TÉMOINS (Format Email)
+                import re
+                email_regex = r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'
+                witnesses_data = json.loads(witnesses_json)
+                for i, w_data in enumerate(witnesses_data):
+                    w_email = w_data.get('email', '').strip().lower()
+                    if not w_email or not re.match(email_regex, w_email):
+                         return JsonResponse({'error': f"Format d'email invalide pour le témoin #{i+1}"}, status=400)
+
+                # Si le wallet n'est pas fourni (cas de l'inscription), on le génère
+                if not owner_wallet:
+                    if not owner_name or not birth_date:
+                        return JsonResponse({'error': 'owner_name et birth_date requis pour la création de compte'}, status=400)
+                    
+                    # Génération d'un wallet déterministe simple (prefix + hash du nom + date)
+                    import hashlib
+                    raw_id = f"{owner_name}{birth_date}".lower().strip()
+                    fingerprint = hashlib.sha256(raw_id.encode()).hexdigest()[:10]
+                    owner_wallet = f"0xilot_{fingerprint}"
+                else:
+                    owner_wallet = owner_wallet.lower().strip()
                 
-                # Génération d'un wallet déterministe simple (prefix + hash du nom + date)
+                if not owner_name:
+                    return JsonResponse({'error': 'owner_name requis'}, status=400)
+
+                # 1. Validation Géométrique - Ordre et Convexité
+                if len(gps_boundaries) < 3:
+                    return JsonResponse({'error': 'La parcelle doit avoir au moins 3 bornes.'}, status=400)
+
+                # Vérification basique des coordonnées
+                for pt in gps_boundaries:
+                    if not (-90 <= pt['lat'] <= 90) or not (-180 <= pt['lng'] <= 180):
+                        return JsonResponse({'error': 'Coordonnées GPS invalides.'}, status=400)
+
+                # Vérification Convexité
+                def cross_product(o, a, b):
+                    return (a['lng'] - o['lng']) * (b['lat'] - o['lat']) - (a['lat'] - o['lat']) * (b['lng'] - o['lng'])
+
+                n = len(gps_boundaries)
+                cp_signs = []
+                for i in range(n):
+                    p1 = gps_boundaries[i]
+                    p2 = gps_boundaries[(i + 1) % n]
+                    p3 = gps_boundaries[(i + 2) % n]
+                    cp = cross_product(p1, p2, p3)
+                    if cp != 0:
+                        cp_signs.append(cp > 0)
+                
+                # Si tous les produits vectoriels n'ont pas le même signe (sauf 0), le polygone n'est pas convexe
+                if not (all(cp_signs) or not any(cp_signs)):
+                     return JsonResponse({'error': 'La forme de la parcelle est invalide (non convexe). Vérifiez l\'ordre des points.'}, status=400)
+
+                # Validation Distance vs Centroid (Pour éviter des points éparpillés au hasard)
+                # On tolère une "grande" parcelle mais pas des points à l'autre bout du pays
+                # Max diag distance approx 5km (0.05 degrés d'écart environ)
+                c_lat = float(gps_centroid.get('lat') or 0)
+                c_lng = float(gps_centroid.get('lng') or 0)
+                
+                for pt in gps_boundaries:
+                    dist_lat = abs(pt['lat'] - c_lat)
+                    dist_lng = abs(pt['lng'] - c_lng)
+                    if dist_lat > 0.05 or dist_lng > 0.05: # Approx 5.5km
+                         return JsonResponse({'error': 'Les bornes sont trop éloignées du point central (Max 5km).'}, status=400)
+
+                # 2. Vérification des Doublons (Coordonnées du Centroide)
+                existing = Property.objects.filter(
+                    gps_centroid__lat__gte=c_lat-0.0001, 
+                    gps_centroid__lat__lte=c_lat+0.0001,
+                    gps_centroid__lng__gte=c_lng-0.0001,
+                    gps_centroid__lng__lte=c_lng+0.0001
+                ).exists()
+                
+                if existing:
+                    return JsonResponse({'error': 'Une parcelle est déjà enregistrée à ces coordonnées.'}, status=409)
+
+                # Validation du nom
+                if not re.match(r"^[a-zA-Z\s\.\-]+$", owner_name) or len(owner_name) < 3:
+                    return JsonResponse({'error': 'Nom invalide'}, status=400)
+                
+                owner, _ = User.objects.get_or_create(wallet_address=owner_wallet)
+                owner.full_name = owner_name
+                if birth_date:
+                    owner.birth_date = birth_date
+                
+                # Nouvelles informations d'identité
+                owner.country = user_country
+                owner.district = district
+                owner.village = village
+                
+                owner.save()
+                
+                # Génération d'un ID blockchain aléatoire (simulé)
+                import random
+                simulated_on_chain_id = str(random.randint(100000, 999999))
+
+                prop = Property.objects.create(
+                    owner_wallet=owner,
+                    gps_centroid=gps_centroid,
+                    gps_boundaries=gps_boundaries,
+                    country=country,
+                    district=district,
+                    village=village,
+                    surveyor_id=surveyor_id if surveyor_id else None,
+                    surveyor_name=surveyor_name,
+                    area_sqm=float(area_sqm) if area_sqm else None,
+                    area_cadastral=area_cadastral,
+                    on_chain_id=simulated_on_chain_id,
+                    status=Property.Status.PENDING_SURVEYOR if surveyor_id else Property.Status.DRAFT
+                )
+                
+                # --- SIMULATION ENVOI EMAIL ---
+                if prop.surveyor:
+                    # Dans un vrai projet : from django.core.mail import send_mail
+                    print(f"🔔 [EMAIL SIMULATION] Destinataire: {prop.surveyor.email}")
+                    print(f"Objet: Nouvelle parcelle à attester - ID: {prop.id}")
+                    print(f"Détails: L'utilisateur {owner.full_name} a déclaré une parcelle à {prop.village}.")
+
+                # Sauvegarde des Témoins
                 import hashlib
-                raw_id = f"{owner_name}{birth_date}".lower().strip()
-                fingerprint = hashlib.sha256(raw_id.encode()).hexdigest()[:10]
-                owner_wallet = f"0xilot_{fingerprint}"
-            else:
-                owner_wallet = owner_wallet.lower().strip()
-            
-            if not owner_name:
-                return JsonResponse({'error': 'owner_name requis'}, status=400)
+                for i, w_data in enumerate(witnesses_data):
+                    w_email = w_data.get('email', '').strip().lower()
+                    
+                    idx = i + 1
+                    w_file = request.FILES.get(f'witness_id_{idx}')
+                    fake_w_cid = ""
+                    if w_file:
+                        w_content = w_file.read()
+                        w_file.seek(0)
+                        fake_w_cid = "Qm" + hashlib.sha256(w_content).hexdigest()[:44]
+                    
+                    witness_obj = PropertyWitness.objects.create(
+                        property=prop,
+                        last_name=w_data.get('last_name'),
+                        first_name=w_data.get('first_name'),
+                        birth_date=w_data.get('birth_date'),
+                        gender=w_data.get('gender'),
+                        phone=w_data.get('phone'),
+                        email=w_email,
+                        id_card_photo=w_file,
+                        ipfs_cid=fake_w_cid
+                    )
 
-            # 1. Validation Géométrique - Ordre et Convexité
-            if len(gps_boundaries) < 3:
-                return JsonResponse({'error': 'La parcelle doit avoir au moins 3 bornes.'}, status=400)
+                # Sauvegarde des médias
+                import hashlib
+                for f in files:
+                    # Calcul du CID simulé (Qm + hash du contenu)
+                    content = f.read()
+                    f.seek(0) # Reset position for saving
+                    fake_cid = "Qm" + hashlib.sha256(content).hexdigest()[:44]
+                    
+                    m_type = PropertyMedia.MediaType.OTHER_MEDIA
+                    if f.content_type.startswith('image/'): 
+                        m_type = PropertyMedia.MediaType.PHOTO_LAND
+                    elif f.content_type.startswith('video/'): 
+                        m_type = PropertyMedia.MediaType.VIDEO_DRONE
+                    elif f.content_type == 'application/pdf': 
+                        m_type = PropertyMedia.MediaType.LEGAL_DOC
 
-            # Vérification basique des coordonnées
-            for pt in gps_boundaries:
-                if not (-90 <= pt['lat'] <= 90) or not (-180 <= pt['lng'] <= 180):
-                    return JsonResponse({'error': 'Coordonnées GPS invalides.'}, status=400)
+                    PropertyMedia.objects.create(
+                        property=prop, 
+                        file=f,
+                        ipfs_cid=fake_cid, 
+                        media_type=m_type
+                    )
 
-            # Vérification Convexité
-            def cross_product(o, a, b):
-                return (a['lng'] - o['lng']) * (b['lat'] - o['lat']) - (a['lat'] - o['lat']) * (b['lng'] - o['lng'])
-
-            n = len(gps_boundaries)
-            cp_signs = []
-            for i in range(n):
-                p1 = gps_boundaries[i]
-                p2 = gps_boundaries[(i + 1) % n]
-                p3 = gps_boundaries[(i + 2) % n]
-                cp = cross_product(p1, p2, p3)
-                if cp != 0:
-                    cp_signs.append(cp > 0)
-            
-            # Si tous les produits vectoriels n'ont pas le même signe (sauf 0), le polygone n'est pas convexe
-            if not (all(cp_signs) or not any(cp_signs)):
-                 return JsonResponse({'error': 'La forme de la parcelle est invalide (non convexe). Vérifiez l\'ordre des points.'}, status=400)
-
-            # Validation Distance vs Centroid (Pour éviter des points éparpillés au hasard)
-            # On tolère une "grande" parcelle mais pas des points à l'autre bout du pays
-            # Max diag distance approx 5km (0.05 degrés d'écart environ)
-            c_lat = float(gps_centroid.get('lat') or 0)
-            c_lng = float(gps_centroid.get('lng') or 0)
-            
-            for pt in gps_boundaries:
-                dist_lat = abs(pt['lat'] - c_lat)
-                dist_lng = abs(pt['lng'] - c_lng)
-                if dist_lat > 0.05 or dist_lng > 0.05: # Approx 5.5km
-                     return JsonResponse({'error': 'Les bornes sont trop éloignées du point central (Max 5km).'}, status=400)
-
-            # 2. Vérification des Doublons (Coordonnées du Centroide)
-            existing = Property.objects.filter(
-                gps_centroid__lat__gte=c_lat-0.0001, 
-                gps_centroid__lat__lte=c_lat+0.0001,
-                gps_centroid__lng__gte=c_lng-0.0001,
-                gps_centroid__lng__lte=c_lng+0.0001
-            ).exists()
-            
-            if existing:
-                return JsonResponse({'error': 'Une parcelle est déjà enregistrée à ces coordonnées.'}, status=409)
-
-            # Validation du nom
-            import re
-            if not re.match(r"^[a-zA-Z\s\.\-]+$", owner_name) or len(owner_name) < 3:
-                return JsonResponse({'error': 'Nom invalide'}, status=400)
-            
-            owner, _ = User.objects.get_or_create(wallet_address=owner_wallet)
-            owner.full_name = owner_name
-            if birth_date:
-                owner.birth_date = birth_date
-            
-            # Nouvelles informations d'identité
-            owner.country = user_country
-            owner.district = district
-            owner.village = village
-            
-            owner.save()
-            
-            # Génération d'un ID blockchain aléatoire (simulé)
-            import random
-            simulated_on_chain_id = str(random.randint(100000, 999999))
-
-            prop = Property.objects.create(
-                owner_wallet=owner,
-                gps_centroid=gps_centroid,
-                gps_boundaries=gps_boundaries,
-                country=country,
-                district=district,
-                village=village,
-                surveyor_id=surveyor_id if surveyor_id else None,
-                surveyor_name=surveyor_name,
-                area_sqm=float(area_sqm) if area_sqm else None,
-                area_cadastral=area_cadastral,
-                on_chain_id=simulated_on_chain_id,
-                status=Property.Status.PENDING_SURVEYOR if surveyor_id else Property.Status.DRAFT
-            )
-            
-            # --- SIMULATION ENVOI EMAIL ---
-            if prop.surveyor:
-                # Dans un vrai projet : from django.core.mail import send_mail
-                print(f"🔔 [EMAIL SIMULATION] Destinataire: {prop.surveyor.email}")
-                print(f"Objet: Nouvelle parcelle à attester - ID: {prop.id}")
-                print(f"Détails: L'utilisateur {owner.full_name} a déclaré une parcelle à {prop.village}.")
-
-            # Sauvegarde des Témoins
-            import hashlib
-            witnesses_data = json.loads(witnesses_json)
-            for i, w_data in enumerate(witnesses_data):
-                idx = i + 1
-                w_file = request.FILES.get(f'witness_id_{idx}')
-                fake_w_cid = ""
-                if w_file:
-                    w_content = w_file.read()
-                    w_file.seek(0)
-                    fake_w_cid = "Qm" + hashlib.sha256(w_content).hexdigest()[:44]
-                
-                witness_obj = PropertyWitness.objects.create(
-                    property=prop,
-                    last_name=w_data.get('last_name'),
-                    first_name=w_data.get('first_name'),
-                    birth_date=w_data.get('birth_date'),
-                    gender=w_data.get('gender'),
-                    phone=w_data.get('phone'),
-                    email=w_data.get('email'),
-                    id_card_photo=w_file,
-                    ipfs_cid=fake_w_cid
-                )
-
-                # --- SIMULATION ENVOI EMAIL TÉMOIN ---
-                if witness_obj.email:
-                    print(f"👥 [EMAIL SIMULATION TÉMOIN] Destinataire: {witness_obj.email}")
-                    print(f"Objet: Témoignage requis pour iLôt Foncier - {prop.id}")
-                    print(f"Détails: Bonjour {witness_obj.first_name}, vous avez été cité comme témoin pour la parcelle de {owner.full_name}.")
-
-            # Sauvegarde des médias
-            import hashlib
-            for f in files:
-                # Calcul du CID simulé (Qm + hash du contenu)
-                content = f.read()
-                f.seek(0) # Reset position for saving
-                fake_cid = "Qm" + hashlib.sha256(content).hexdigest()[:44]
-                
-                m_type = PropertyMedia.MediaType.OTHER_MEDIA
-                if f.content_type.startswith('image/'): 
-                    m_type = PropertyMedia.MediaType.PHOTO_LAND
-                elif f.content_type.startswith('video/'): 
-                    m_type = PropertyMedia.MediaType.VIDEO_DRONE
-                elif f.content_type == 'application/pdf': 
-                    m_type = PropertyMedia.MediaType.LEGAL_DOC
-
-                PropertyMedia.objects.create(
-                    property=prop, 
-                    file=f,
-                    ipfs_cid=fake_cid, 
-                    media_type=m_type
-                )
-
-            return JsonResponse({'id': str(prop.id), 'status': prop.status, 'wallet_address': owner_wallet}, status=201)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+                return JsonResponse({'id': str(prop.id), 'status': prop.status, 'wallet_address': owner_wallet}, status=201)
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PropertyDetailAPI(View):

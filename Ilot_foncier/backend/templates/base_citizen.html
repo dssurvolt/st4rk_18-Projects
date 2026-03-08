@@ -140,9 +140,25 @@
                         🛒 Marketplace
                     </a>
                 </div>
+                {% if user.is_authenticated %}
                 <div class="me-3 text-end d-none d-md-block">
                     <small class="text-muted d-block">Connecté en tant que</small>
-                    <span class="fw-bold" id="navUserName">{% if user %}{{ user.full_name }}{% else %}Citoyen{% endif %}</span>
+                    <span class="fw-bold" id="navUserName">
+                        {{ user.full_name|default:user.email }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="me-3 position-relative">
+                    <a href="{% if user.is_authenticated %}{% url 'user_dashboard' user.id %}{% else %}#{% endif %}"
+                        class="text-decoration-none">
+                        <span class="fs-4">🔔</span>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            style="font-size: 0.5rem;">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
+                    </a>
                 </div>
                 <div class="rounded-circle bg-light p-2 border">
                     👤
@@ -175,6 +191,23 @@
                         id="linkProfile">
                         <span class="me-3">👤</span> Mon Profil
                     </a>
+                    <a href="{% url 'user_transactions' %}"
+                        class="nav-link-citizen {% if request.resolver_match.url_name == 'user_transactions' or request.resolver_match.url_name == 'web_transaction_status' %}active{% endif %}">
+                        <span class="me-3">🛡️</span> Mes Transactions
+                    </a>
+                    <a href="{% url 'web_my_chats' %}"
+                        class="nav-link-citizen {% if request.resolver_match.url_name == 'web_my_chats' or request.resolver_match.url_name == 'web_chat_room' %}active{% endif %}">
+                        <span class="me-3">💬</span> Mes Discussions
+                    </a>
+
+                    {% if user.notary_profile %}
+                    <div class="mt-4 mb-2 small text-muted text-uppercase fw-bold px-3">Espace Notaire</div>
+                    <a href="{% url 'notary_dashboard' %}"
+                        class="nav-link-citizen {% if request.resolver_match.url_name == 'notary_dashboard' %}active{% endif %}">
+                        <span class="me-3">💼</span> Gestion des Folios
+                    </a>
+                    {% endif %}
+
                     <hr>
                     <a href="#" onclick="logout()" class="nav-link-citizen text-danger">
                         <span class="me-3">🚪</span> Déconnexion
