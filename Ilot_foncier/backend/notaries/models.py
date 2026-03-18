@@ -49,6 +49,26 @@ class TransactionFolio(models.Model):
         STEP6_COMPLETED = 'STEP6_COMPLETED', _('6. Titre Récupéré / Terminé')
         CANCELLED = 'CANCELLED', _('Annulée')
 
+    STEP_ORDER = {
+        Step.STEP1_NOTARY_SELECTED: 1,
+        Step.STEP2_ID_VERIFIED: 2,
+        Step.STEP3_DEED_SIGNED: 3,
+        Step.STEP4_ANDF_DEPOSITED: 4,
+        Step.STEP5_TITLE_MODIFIED: 5,
+        Step.STEP6_COMPLETED: 6,
+        Step.CANCELLED: 0,
+    }
+
+    @property
+    def status_order(self):
+        return self.STEP_ORDER.get(self.status, 0)
+
+    @property
+    def progress_percentage(self):
+        order = self.status_order
+        if order == 0: return 0
+        return int((order / 6) * 100)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     property = models.ForeignKey(Property, on_delete=models.PROTECT, related_name='transactions')
@@ -78,4 +98,4 @@ class TransactionFolio(models.Model):
         verbose_name_plural = _("Folios de Transaction")
 
     def __str__(self):
-        return f"Transaction {self.id} - {self.status}"
+        return f"Dossier {self.property.village or 'Parcelle'} - Acheteur: {self.buyer.full_name or self.buyer.email} ({self.get_status_display()})"

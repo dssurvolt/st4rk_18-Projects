@@ -5,6 +5,18 @@
     <div class="row g-5">
         <!-- Sidebar: Recap -->
         <div class="col-lg-4">
+            <div class="mb-4">
+                {% if is_notary %}
+                <a href="{% url 'notary_dashboard' %}" class="btn btn-link text-decoration-none text-muted p-0">
+                    <i class="bi bi-arrow-left me-2"></i> Retour au Tableau de Bord
+                </a>
+                {% else %}
+                <a href="{% url 'user_transactions' %}" class="btn btn-link text-decoration-none text-muted p-0">
+                    <i class="bi bi-arrow-left me-2"></i> Retour à Mes Transactions
+                </a>
+                {% endif %}
+            </div>
+
             <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 100px;">
                 <h5 class="fw-bold mb-4">Dossier de Transaction</h5>
                 <div class="d-flex align-items-center mb-4">
@@ -18,15 +30,48 @@
                 </div>
 
                 <div class="mb-4">
+                    <label class="small text-muted mb-1 text-uppercase fw-bold">Parties au Dossier</label>
+                    <div class="d-flex flex-column gap-2 mt-2">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle text-primary me-2"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size: 0.6rem;">ACHETEUR</small>
+                                <span class="fw-bold small">{{ folio.buyer.full_name|default:folio.buyer.email }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person text-muted me-2"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size: 0.6rem;">VENDEUR</small>
+                                <span class="fw-bold small">{{ folio.seller.full_name|default:folio.seller.email
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
                     <label class="small text-muted mb-1">PROPRIÉTÉ</label>
                     <h6 class="fw-bold mb-0 text-dark">{{ folio.property.village|default:"Parcelle iLôt" }}</h6>
                     <small class="text-muted">{{ folio.property.district }}</small>
                 </div>
 
                 <div class="mb-4">
-                    <label class="small text-muted mb-1">NOTAIRE RÉFÉRENT</label>
+                    <label class="small text-muted mb-1">⚖️ NOTAIRE EN CHARGE DU DOSSIER</label>
                     <h6 class="fw-bold mb-1 text-primary">Me {{ folio.notary.name }}</h6>
                     <small class="text-muted"><i class="bi bi-telephone-fill me-1"></i> {{ folio.notary.phone }}</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="small text-muted mb-1">PRIX SÉCURISÉ</label>
+                    <h5 class="fw-bold mb-1 text-primary">{{ listing.price_fiat }} FCFA</h5>
+                    {% if listing.escrow_contract %}
+                    <div class="p-2 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 mt-2">
+                        <small class="text-success fw-bold d-block"><i class="bi bi-link-45deg"></i> ESCROW
+                            DÉPLOYÉ</small>
+                        <code class="x-small text-dark">{{ listing.escrow_contract }}</code>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div class="border-top pt-4">
@@ -43,6 +88,12 @@
             <div class="card border-0 shadow-sm rounded-4 p-5 mb-4">
                 <h2 class="fw-bold mb-4">Étapes de votre acquisition sécurisée</h2>
 
+                <!-- Progress Bar -->
+                <div class="progress rounded-pill mb-5" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar"
+                        style="width: {{ folio.progress_percentage }}%;"></div>
+                </div>
+
                 <div class="transaction-timeline position-relative ps-5">
 
                     <!-- Line -->
@@ -55,9 +106,9 @@
                     <div class="step-item mb-5 position-relative">
                         <!-- Icon/Circle -->
                         <div class="step-marker position-absolute rounded-circle shadow-sm d-flex align-items-center justify-content-center
-                                {% if folio.status == step_code %} bg-primary text-white border border-4 border-white {% elif folio.status > step_code %} bg-success text-white {% else %} bg-light text-muted border border-1 border-gray-300 {% endif %}"
+                                {% if folio.status_order == forloop.counter %} bg-primary text-white border border-4 border-white {% elif folio.status_order > forloop.counter %} bg-success text-white {% else %} bg-light text-muted border border-1 border-gray-300 {% endif %}"
                             style="width: 50px; height: 50px; left: -68px; top: -10px; z-index: 2; transition: all 0.3s ease;">
-                            {% if folio.status > step_code %}
+                            {% if folio.status_order > forloop.counter %}
                             <i class="bi bi-check-lg fs-4"></i>
                             {% else %}
                             <span class="fw-bold h5 mb-0">{{ forloop.counter }}</span>
@@ -66,7 +117,7 @@
 
                         <div class="step-content">
                             <h4
-                                class="fw-bold mb-2 {% if folio.status == step_code %} text-primary {% elif folio.status > step_code %} text-success {% else %} text-muted opacity-50 {% endif %}">
+                                class="fw-bold mb-2 {% if folio.status_order == forloop.counter %} text-primary {% elif folio.status_order > forloop.counter %} text-success {% else %} text-muted opacity-50 {% endif %}">
                                 {{ step_label }}
                             </h4>
 
@@ -130,4 +181,13 @@
         display: none;
     }
 </style>
+
+<script>
+    // Auto-refresh intelligent : actualise la page toutes les 30 secondes si le dossier n'est pas terminé
+    {% if folio.status_order < 6 and folio.status != 'CANCELLED' %}
+    setTimeout(function () {
+        location.reload();
+    }, 30000); // 30 secondes
+    {% endif %}
+</script>
 {% endblock %}

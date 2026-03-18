@@ -1,4 +1,5 @@
 import uuid
+import builtins
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from land_registry.models import Property
@@ -25,8 +26,23 @@ class Listing(models.Model):
     class Meta:
         db_table = 'listings'
 
+    @builtins.property
+    def is_under_contract(self):
+        """Vérifie si une transaction notariale est active sur cette propriété."""
+        from notaries.models import TransactionFolio
+        return TransactionFolio.objects.filter(
+            property=self.property,
+            status__in=[
+                'STEP1_NOTARY_SELECTED',
+                'STEP2_ID_VERIFIED',
+                'STEP3_DEED_SIGNED',
+                'STEP4_ANDF_DEPOSITED',
+                'STEP5_TITLE_MODIFIED'
+            ]
+        ).exists()
+
     def __str__(self):
-        return f"Listing {self.id} for {self.property_id}"
+        return f"Annonce {self.property.village or 'Parcelle'} - {self.price_fiat} FCFA"
 
 class TransactionsHistory(models.Model):
     """
@@ -130,7 +146,8 @@ class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
+    content = models.TextField(blank=True, null=True)
+    attachment = models.FileField(upload_to='chat_attachments/', null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

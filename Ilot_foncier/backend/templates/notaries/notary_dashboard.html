@@ -49,18 +49,30 @@
                             {% for t in transactions %}
                             <tr>
                                 <td class="ps-4">
-                                    <h6 class="mb-1 fw-bold">{{ t.property.village|default:"Parcelle" }}</h6>
-                                    <small class="text-primary fw-bold">#{{ t.id|stringformat:"s"|slice:":8" }}</small>
-                                    <div class="small text-muted">{{ t.property.district }}</div>
+                                    <h6 class="mb-0 fw-bold">{{ t.property.village|default:"Parcelle sans nom" }}</h6>
+                                    <div class="small text-primary fw-bold mb-1">Folio #{{
+                                        t.id|stringformat:"s"|slice:":8" }}</div>
+                                    {% if t.property.district %}
+                                    <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>{{
+                                        t.property.district }}</div>
+                                    {% endif %}
                                 </td>
                                 <td>
-                                    <div class="mb-1">
-                                        <i class="bi bi-person-fill text-muted me-1"></i> <strong>A:</strong> {{
-                                        t.buyer.full_name|default:t.buyer.email|truncatechars:25 }}
+                                    <div class="mb-2">
+                                        <div class="small text-muted mb-1 text-uppercase fw-bold"
+                                            style="font-size: 0.6rem;">Acheteur</div>
+                                        <div class="fw-bold text-dark">
+                                            <i class="bi bi-person-circle text-primary me-1"></i>
+                                            {{ t.buyer.full_name|default:t.buyer.email }}
+                                        </div>
                                     </div>
-                                    <div class="small">
-                                        <i class="bi bi-person text-muted me-1"></i> <strong>V:</strong> {{
-                                        t.seller.full_name|default:t.seller.email|truncatechars:25 }}
+                                    <div class="mb-0">
+                                        <div class="small text-muted mb-1 text-uppercase fw-bold"
+                                            style="font-size: 0.6rem;">Vendeur</div>
+                                        <div class="fw-bold text-secondary">
+                                            <i class="bi bi-person text-muted me-1"></i>
+                                            {{ t.seller.full_name|default:t.seller.email }}
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -75,9 +87,10 @@
                                 <td>
                                     {% if t.status != 'STEP6_COMPLETED' and t.status != 'CANCELLED' %}
                                     <form action="{% url 'update_transaction_step' folio_id=t.id %}" method="POST"
-                                        class="d-flex gap-2">
+                                        class="d-flex gap-2"
+                                        onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerHTML='...';">
                                         {% csrf_token %}
-                                        <select name="next_step"
+                                        <select name="next_step" required
                                             class="form-select form-select-sm rounded-3 border-light shadow-none"
                                             style="width: 250px;">
                                             <option value="" disabled selected>Passer à l'étape suivante...</option>
@@ -86,6 +99,7 @@
                                             <option value="STEP4_ANDF_DEPOSITED">4. Déposé à l'ANDF</option>
                                             <option value="STEP5_TITLE_MODIFIED">5. Titre Modifié par ANDF</option>
                                             <option value="STEP6_COMPLETED">6. Titre Récupéré (Terminé)</option>
+                                            <option value="CANCELLED" class="text-danger">Annuler le dossier</option>
                                         </select>
 
                                         <!-- Champ conditionnel JS pour le n° ANDF -->

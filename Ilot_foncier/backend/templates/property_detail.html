@@ -2,7 +2,8 @@
 
 {% block content %}
 <div class="mb-5">
-    <a href="#" id="btnBackToDashboard" class="text-decoration-none text-muted small fw-bold">
+    <a href="{% if user.is_authenticated %}{% url 'user_dashboard' wallet=user.id %}{% else %}{% url 'web_login' %}{% endif %}"
+        id="btnBackToDashboard" class="text-decoration-none text-muted small fw-bold">
         ← Retour à mon patrimoine
     </a>
 </div>
@@ -335,16 +336,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // 1. Bouton Retour
-        const backBtn = document.getElementById('btnBackToDashboard');
-        const ownerWallet = "{{ owner.wallet_address }}";
-        const savedWallet = localStorage.getItem('ilot_wallet') || ownerWallet;
-
-        if (savedWallet && savedWallet !== "None") {
-            backBtn.href = "/dashboard/" + savedWallet.toLowerCase().trim() + "/";
-        } else {
-            backBtn.href = "{% url 'web_login' %}";
-        }
+        // 1. Bouton Retour déjà géré par Django Template
 
         // 2. Initialisation de la Carte
         try {
@@ -400,11 +392,16 @@
     }
 
     function contactSeller() {
-        const isCertified = "{{ property.is_certified }}";
-        if (isCertified === 'True') {
-            alert("✅ Dossier Certifié !\n\nVotre demande de contact a été transmise au propriétaire. Il pourra vous donner accès aux documents complets (géomètre, témoins).");
+        const listingId = "{{ listing.id }}";
+        if (listingId && listingId !== "None") {
+            window.location.href = `/chat/start/${listingId}/`;
         } else {
-            alert("⚠️ Dossier en attente de certification.\n\nVous pouvez contacter le vendeur, mais le dossier n'est pas encore totalement sécurisé par iLôt.");
+            const isCertified = "{{ property.is_certified }}";
+            if (isCertified === 'True') {
+                alert("✅ Dossier Certifié !\n\nVotre demande de contact a été transmise au propriétaire. Il pourra vous donner accès aux documents complets.");
+            } else {
+                alert("⚠️ Dossier en attente de certification.");
+            }
         }
     }
 </script>

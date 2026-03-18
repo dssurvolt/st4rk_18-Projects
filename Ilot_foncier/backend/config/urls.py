@@ -6,7 +6,8 @@ from django.conf.urls.static import static
 from land_registry.views import (
     dashboard, web_properties, PropertyListAPI, PropertyDetailAPI, 
     user_dashboard, web_register_user, web_login, web_logout, web_property_detail, 
-    web_profile, web_password_reset, web_add_property
+    web_profile, web_password_reset, web_add_property, IdentityExtractionAPI,
+    LandTitleExtractionAPI
 )
 from consensus.views import web_validation, ValidationRequestAPI, web_witness_confirmation
 from identity.ussd_views import web_ussd, USSDGateway
@@ -15,7 +16,8 @@ from identity.views import AuthAPI
 from identity.password_reset_views import PasswordResetAPI
 from marketplace.views import (
     ListingListAPI, web_marketplace, web_create_listing, pmf_dashboard, 
-    MarketplaceInquiryAPI, web_start_chat, web_chat_room, web_my_chats, SendMessageAPI
+    MarketplaceInquiryAPI, web_start_chat, web_chat_room, web_my_chats, 
+    SendMessageAPI, api_unread_notifications_count
 )
 from notaries.views import (
     web_choose_notary, web_start_transaction, web_transaction_status, 
@@ -54,6 +56,7 @@ urlpatterns = [
     path('chat/room/<uuid:room_id>/', web_chat_room, name='web_chat_room'),
     path('chat/my-chats/', web_my_chats, name='web_my_chats'),
     path('api/chat/send/', SendMessageAPI.as_view(), name='api_chat_send'),
+    path('api/notifications/unread-count/', api_unread_notifications_count, name='api_unread_notifications_count'),
     
     # Espace Supervision (Admin)
     path('supervision/', dashboard, name='dashboard'),
@@ -68,6 +71,8 @@ urlpatterns = [
     path('api/marketplace/listings/', ListingListAPI.as_view(), name='api_marketplace_list'),
     path('api/identity/profile/<str:wallet>/', UserProfileAPI.as_view(), name='api_user_profile'),
     path('api/marketplace/inquire/', MarketplaceInquiryAPI.as_view(), name='api_marketplace_inquire'),
+    path('api/identity/extract/', IdentityExtractionAPI.as_view(), name='api_identity_extract'),
+    path('api/land-title/extract/', LandTitleExtractionAPI.as_view(), name='api_land_title_extract'),
     
     # Consensus Flow
     path('validation/witness/', web_witness_confirmation, name='web_witness_confirmation'),

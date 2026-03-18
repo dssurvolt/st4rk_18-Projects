@@ -32,6 +32,10 @@ def notify_transaction_update(folio):
         'STEP6_COMPLETED': {
             'title': "Transaction terminée 🌿",
             'body': f"Félicitations ! La transaction pour {property_village} est terminée. Votre titre est disponible.",
+        },
+        'CANCELLED': {
+            'title': "Transaction annulée ❌",
+            'body': f"Le dossier de transaction pour {property_village} a été annulé par le notaire.",
         }
     }
 

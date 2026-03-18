@@ -7,13 +7,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.db.models import Count
 from django.db import transaction
+from django.contrib.auth.decorators import login_required
 from .models import Property, PropertyMedia, PropertyWitness, AuthorizedSurveyor
+from identity.decorators import admin_required
 from identity.models import User
 from consensus.models import ValidationRequest
 from marketplace.models import MarketplaceView
+from utils.id_document_extractor import extract_from_upload
 
 # --- DASHBOARD VIEW (HTML) ---
 
+@admin_required
 def dashboard(request):
     """
     Tableau de bord principal pour l'administrateur / superviseur (Vision B2G).
@@ -67,6 +71,7 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
+@login_required
 def user_dashboard(request, wallet):
     """
     Tableau de bord personnel pour un utilisateur.
@@ -101,6 +106,10 @@ def user_dashboard(request, wallet):
         # SÉCURITÉ : Un utilisateur authentifié ne peut voir que SON PROPRE dashboard.
         # Si un utilisateur tente d'accéder à un autre ID via l'URL, on le redirige vers le sien.
         if request.user.is_authenticated:
+            # RÈGLE MÉTIER : Un notaire ne doit pas voir le dashboard citoyen
+            if request.user.role == User.Role.NOTARY:
+                return redirect('notary_dashboard')
+
             if user and user != request.user:
                  messages.warning(request, "Redirection vers votre propre tableau de bord.")
                  return redirect('user_dashboard', wallet=str(request.user.id))
@@ -113,9 +122,9 @@ def user_dashboard(request, wallet):
         
         user_properties = Property.objects.filter(owner_wallet=user).annotate(media_count=Count('media'))
         
-        # Récupérer les notifications récentes
+        # Récupérer les notifications récentes (In-App)
         from marketplace.models import Notification
-        notifications = Notification.objects.filter(user_wallet=user).order_by('-created_at')[:5]
+        notifications = Notification.objects.filter(user_wallet=user).order_by('-created_at')[:15]
 
         context = {
             'user': user,
@@ -129,6 +138,7 @@ def user_dashboard(request, wallet):
         if request.user.is_authenticated:
              return redirect('user_dashboard', wallet=str(request.user.id))
         return render(request, 'user_dashboard.html', {'error': f'Erreur: {str(e)}'})
+@login_required
 def web_add_property(request, wallet):
     """Vue pour ajouter une parcelle à un utilisateur existant."""
     try:
@@ -171,6 +181,7 @@ def web_add_property(request, wallet):
              return render(request, 'add_property.html', {'user': request.user})
         return redirect('web_login')
 
+@admin_required
 def web_properties(request):
     return render(request, 'properties.html')
 
@@ -206,6 +217,7 @@ def web_property_detail(request, pk):
     except Property.DoesNotExist:
         return render(request, 'property_detail.html', {'error': 'Propriété non trouvée'})
 
+@login_required
 def web_profile(request, wallet):
     """Vue HTML pour le profil utilisateur."""
     try:
@@ -256,12 +268,19 @@ def web_profile(request, wallet):
 def web_register_user(request):
     """Vue pour l'inscription avec email/mot de passe."""
     if request.user.is_authenticated:
+        if request.user.role == User.Role.NOTARY:
+            return redirect('notary_dashboard')
         return redirect('user_dashboard', wallet=str(request.user.id))
     return render(request, 'register.html')
 
 def web_login(request):
     """Vue pour la connexion citoyenne."""
     if request.user.is_authenticated:
+        next_url = request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+        if request.user.role == User.Role.NOTARY:
+            return redirect('notary_dashboard')
         return redirect('user_dashboard', wallet=str(request.user.id))
     return render(request, 'login.html')
 
@@ -527,3 +546,45 @@ def web_logout(request):
     """Vue de déconnexion"""
     logout(request)
     return redirect('web_login')
+
+# --- API OCR EXTRACTION ---
+
+from utils.land_title_extractor import extract_land_title_data
+
+@method_decorator(csrf_exempt, name='dispatch')
+class IdentityExtractionAPI(View):
+    """
+    API pour extraire les données d'identité à partir d'un fichier uploadé (PDF/Image).
+    """
+    def post(self, request):
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'Aucun fichier fourni.'}, status=400)
+            
+        uploaded_file = request.FILES['file']
+        data = extract_from_upload(uploaded_file)
+        
+        if 'raw_text' in data:
+            del data['raw_text']
+            
+        return JsonResponse(data)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LandTitleExtractionAPI(View):
+    """
+    API pour extraire les données d'un titre foncier / plan parcellaire.
+    """
+    def post(self, request):
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'Aucun fichier fourni.'}, status=400)
+            
+        uploaded_file = request.FILES['file']
+        data = extract_land_title_data(uploaded_file)
+        
+        if 'raw_text' in data:
+            del data['raw_text']
+            
+        return JsonResponse(data)
+
+def web_extract_identity(request):
+    """Vue simplifiée pour usage interne ou future extension."""
+    return render(request, 'extract_identity_test.html')

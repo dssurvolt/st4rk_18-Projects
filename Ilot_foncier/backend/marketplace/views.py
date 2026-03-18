@@ -7,7 +7,8 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
-from .models import Listing, MarketplaceInquiry, MarketplaceView, ChatRoom, ChatMessage
+from identity.decorators import admin_required
+from .models import Listing, MarketplaceInquiry, MarketplaceView, ChatRoom, ChatMessage, Notification
 from land_registry.models import Property
 from identity.models import User
 from django.utils import timezone
@@ -23,7 +24,7 @@ def web_marketplace(request):
         witness_count=Count('property__witnesses')
     ).filter(
         witness_count__gt=0
-    ).select_related('property', 'property__owner_wallet')
+    ).select_related('property', 'property__owner_wallet').prefetch_related('property__media')
     
     # Traçabilité accrue : Enregistrement de la consultation de la page d'accueil
     try:
@@ -46,7 +47,8 @@ def web_marketplace(request):
             'lng': float(l.property.gps_centroid.get('lng', 0)),
             'price_fiat': f"{l.price_fiat:,}",
             'village': l.property.village or "Parcelle iLôt",
-            'is_certified': l.property.is_certified
+            'is_certified': l.property.is_certified,
+            'is_under_contract': l.is_under_contract
         })
         
     # Récupération de quelques notaires certifiés pour rassurer l'acheteur
@@ -58,6 +60,7 @@ def web_marketplace(request):
         'featured_notaries': featured_notaries
     })
 
+@login_required
 def web_create_listing(request, property_id):
     """Vue HTML pour mettre un terrain en vente."""
     try:
@@ -152,6 +155,7 @@ class MarketplaceInquiryAPI(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
+@admin_required
 def pmf_dashboard(request):
     """Dashboard PMF enrichi : Traçabilité et Cohortes."""
     now = timezone.now()
@@ -282,6 +286,15 @@ def web_chat_room(request, room_id):
     
     # Marquer les messages entrants comme lus
     room.messages.exclude(sender=request.user).update(is_read=True)
+    
+    # Marquer les notifications de type NEW_MESSAGE pour cette room comme lues
+    from marketplace.models import Notification
+    Notification.objects.filter(
+        user_wallet=request.user, 
+        type='NEW_MESSAGE',
+        payload__room_id=str(room.id),
+        read_at__isnull=True
+    ).update(read_at=timezone.now())
 
     other_user = room.seller if request.user == room.buyer else room.buyer
 
@@ -319,15 +332,22 @@ class SendMessageAPI(View):
             return JsonResponse({'error': 'Non authentifié'}, status=401)
         
         try:
-            body = json.loads(request.body)
-            room_id = body.get('room_id')
-            content = body.get('content')
+            # Support à la fois JSON et Multipart Form Data
+            if request.content_type == 'application/json':
+                body = json.loads(request.body)
+                room_id = body.get('room_id')
+                content = body.get('content')
+                attachment = None
+            else:
+                room_id = request.POST.get('room_id')
+                content = request.POST.get('content')
+                attachment = request.FILES.get('attachment')
             
-            if not content:
+            if not content and not attachment:
                 return JsonResponse({'error': 'Message vide'}, status=400)
             
-            # Application du iLôt Shield
-            clean_content = anonymize_content(content)
+            # Application du iLôt Shield si contenu texte présent
+            clean_content = anonymize_content(content) if content else ""
                 
             room = ChatRoom.objects.get(id=room_id)
             if request.user != room.buyer and request.user != room.seller:
@@ -336,20 +356,41 @@ class SendMessageAPI(View):
             message = ChatMessage.objects.create(
                 room=room,
                 sender=request.user,
-                content=clean_content
+                content=clean_content,
+                attachment=attachment
             )
             
             # Forcer la mise à jour du timestamp de la room
             room.save() 
 
+            # NOTIFICATION : Alerter le destinataire
+            receiver = room.seller if request.user == room.buyer else room.buyer
+            notif_msg = clean_content if clean_content else "📷 Pièce jointe envoyée"
+            Notification.objects.create(
+                user_wallet=receiver,
+                type='NEW_MESSAGE',
+                payload={
+                    'title': f"💬 Message de {request.user.full_name}",
+                    'message': notif_msg[:60] + "..." if len(notif_msg) > 60 else notif_msg,
+                    'room_id': str(room.id)
+                }
+            )
+
             return JsonResponse({
                 'id': str(message.id),
                 'sender': message.sender.full_name,
                 'content': message.content,
+                'attachment_url': message.attachment.url if message.attachment else None,
                 'created_at': message.created_at.strftime("%H:%M")
             }, status=201)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+def api_unread_notifications_count(request):
+    """API ultra-légère pour le polling des notifications."""
+    count = Notification.objects.filter(user_wallet=request.user, read_at__isnull=True).count()
+    return JsonResponse({'count': count})
 
 @login_required
 def web_my_chats(request):

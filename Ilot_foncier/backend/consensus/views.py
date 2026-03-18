@@ -15,6 +15,9 @@ from django.shortcuts import render, get_object_or_404
 from django.db import transaction
 from land_registry.models import Property, PropertyWitness
 
+from identity.decorators import admin_required
+
+@admin_required
 def web_validation(request):
     """Vue HTML pour le simulateur de consensus."""
     return render(request, 'validation.html')
