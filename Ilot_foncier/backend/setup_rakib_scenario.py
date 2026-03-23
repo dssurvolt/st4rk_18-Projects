@@ -77,7 +77,11 @@ def setup_rakib_test():
         property=prop,
         first_name="Témoin",
         last_name="Certifié",
-        defaults={'phone': "+229 01 00 00 00"}
+        defaults={
+            'phone': "+229 01 00 00 00",
+            'birth_date': "1985-05-15",
+            'gender': 'M'
+        }
     )
 
     # 5. ANNONCE
